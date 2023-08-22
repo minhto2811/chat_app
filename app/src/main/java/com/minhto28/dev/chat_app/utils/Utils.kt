@@ -13,13 +13,18 @@ fun generateUniqueID(): String {
     return uid.toString().padStart(8, '0')
 }
 
-fun showMessage(message: String, context: Context, callbacks: ((Boolean) -> Unit)?) {
+fun showMessage(
+    message: String, context: Context, cancel: Boolean, callbacks: (() -> Unit)?
+) {
     val dialog = AlertDialog.Builder(context)
-    dialog.setTitle("Notification:")
+    dialog.setTitle("Notification")
     dialog.setMessage(message)
     dialog.setCancelable(false)
-    dialog.setPositiveButton("Confirm", DialogInterface.OnClickListener { dialogInterface, i ->
-        callbacks?.invoke(true)
+    if (cancel) {
+        dialog.setNegativeButton("Cancel", null)
+    }
+    dialog.setPositiveButton("Confirm", DialogInterface.OnClickListener { _, _ ->
+        callbacks?.invoke()
     })
     dialog.create().show()
 }

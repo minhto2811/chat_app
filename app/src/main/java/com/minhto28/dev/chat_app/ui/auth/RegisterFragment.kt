@@ -1,5 +1,6 @@
 package com.minhto28.dev.chat_app.ui.auth
 
+import SharedPrefs
 import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -27,7 +28,7 @@ import com.minhto28.dev.chat_app.databinding.FragmentRegisterBinding
 import com.minhto28.dev.chat_app.models.Account
 import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.ui.main.MainActivity
-import com.minhto28.dev.chat_app.utils.SharedPrefs
+import com.minhto28.dev.chat_app.utils.DataManager
 import com.minhto28.dev.chat_app.utils.generateUniqueID
 import com.minhto28.dev.chat_app.utils.showMessage
 
@@ -52,13 +53,14 @@ class RegisterFragment : Fragment() {
                     val bitmap = BitmapFactory.decodeStream(inputStream)
                     inputStream?.close()
                     binding.imvAvatar.setImageBitmap(bitmap)
+                    binding.btnSignup.enable()
                 }
             }
         }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentRegisterBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -92,13 +94,15 @@ class RegisterFragment : Fragment() {
                             saveImage()
                         } else {
                             loading(View.GONE, View.VISIBLE)
-                            showMessage("This account has already existed!", requireContext(), null)
+                            showMessage(
+                                "This account has already existed!", requireContext(), false, null
+                            )
                         }
                     }
 
                     override fun onCancelled(error: DatabaseError) {
                         loading(View.GONE, View.VISIBLE)
-                        showMessage(error.message!!, requireContext(), null)
+                        showMessage(error.message, requireContext(), false, null)
                         Log.e("check", error.message)
                     }
 
@@ -130,6 +134,7 @@ class RegisterFragment : Fragment() {
                 showMessage(
                     "Error! An error occurred. Please try again later",
                     requireContext(),
+                    false,
                     null
                 )
                 Log.e("saveImage", "Lỗi khi lưu ảnh kiểm tra lại quyền đọc ghi storage")
@@ -145,24 +150,23 @@ class RegisterFragment : Fragment() {
         val userRef = database.child("user").child(uid)
         accountRef.setValue(account).addOnSuccessListener {
             userRef.setValue(user).addOnSuccessListener {
+                SharedPrefs.instance.put(account)
+                DataManager.getInstance().setAccount(account)
+                DataManager.getInstance().setUser(user)
                 loading(View.GONE, View.VISIBLE)
-                SharedPrefs.instance.put(SharedPrefs.ACCOUNT, account)
-                SharedPrefs.instance.put(SharedPrefs.USER, user)
                 Toast.makeText(requireContext(), "Account successfully created", Toast.LENGTH_SHORT)
                     .show()
                 val intent = Intent(requireActivity(), MainActivity::class.java)
-                intent.putExtra("account", account)
-                intent.putExtra("user", user)
                 requireActivity().startActivity(intent)
                 requireActivity().finish()
             }.addOnFailureListener {
                 loading(View.GONE, View.VISIBLE)
-                showMessage(it.message!!, requireContext(), null)
+                showMessage(it.message!!, requireContext(), false, null)
                 Log.e("user ref: ", it.toString())
             }
         }.addOnFailureListener {
             loading(View.GONE, View.VISIBLE)
-            showMessage(it.message!!, requireContext(), null)
+            showMessage(it.message!!, requireContext(), false, null)
             Log.e("account ref: ", it.toString())
         }
 
@@ -180,9 +184,24 @@ class RegisterFragment : Fragment() {
         editText.addTextChangedListener {
             when (index) {
                 1 -> fullname = it.toString().trim()
-                2 -> username = it.toString().trim()
-                3 -> password = it.toString().trim()
-                4 -> repeat_password = it.toString().trim()
+                2 -> {
+                    username = it.toString().trim()
+                    binding.tilUsername.error =
+                        if (username.length < 5) "Username more than 4 characters" else null
+                }
+
+                3 -> {
+                    password = it.toString().trim()
+                    binding.tilPassword.error =
+                        if (password.length < 5) "Password more than 4 characters" else null
+                }
+
+                4 -> {
+                    repeat_password = it.toString().trim()
+                    binding.tilRepeatPassword.error =
+                        if (repeat_password.length < 5) "Password more than 4 characters" else if (repeat_password != password) "Password does not match" else null
+                }
+
                 else -> Log.e("onTextChange: ", "null")
             }
             binding.btnSignup.enable()
@@ -191,9 +210,7 @@ class RegisterFragment : Fragment() {
 
     private fun Button.enable() {
         isEnabled =
-            username.isNotEmpty() && fullname.isNotEmpty() && password.isNotEmpty() && repeat_password.isNotEmpty() && uri != null && password.equals(
-                repeat_password
-            )
+            username.length > 4 && fullname.isNotEmpty() && password.length > 4 && repeat_password.length > 4 && uri != null && password == repeat_password
     }
 
     private fun backToLogin() {
