@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +13,6 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
@@ -26,7 +26,6 @@ import com.minhto28.dev.chat_app.utils.DataManager
 class SplashFragment : Fragment() {
     private var _binding: FragmentSplashBinding? = null
     private val binding get() = _binding!!
-    private lateinit var database: DatabaseReference
     private var timeStart = 0L
     private var timeEnd = 0L
 
@@ -36,7 +35,6 @@ class SplashFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSplashBinding.inflate(inflater, container, false)
-        database = Firebase.database.reference
         timeStart = System.currentTimeMillis()
         return binding.root
     }
@@ -49,8 +47,7 @@ class SplashFragment : Fragment() {
     private fun checkAccount() {
         account = SharedPrefs.instance.get(SharedPrefs.ACCOUNT)
         if (account != null) {
-            val accountRef =
-                database.child("account").child(account!!.username)
+            val accountRef = Firebase.database.reference.child("account").child(account!!.username)
             accountRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val account = snapshot.getValue(Account::class.java)
@@ -72,14 +69,15 @@ class SplashFragment : Fragment() {
     }
 
     private fun getUser(account: Account) {
-        val userRef = database.child("user").child(account.uid)
-        userRef.addListenerForSingleValueEvent(
+        val usersRef = Firebase.database.reference.child("user").child(this.account!!.uid)
+        usersRef.addListenerForSingleValueEvent(
             object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     user = snapshot.getValue(User::class.java)
                     if (user != null) {
-                        DataManager.getInstance().setAccount(account)
+                        DataManager.getInstance().setAccount(account!!)
                         DataManager.getInstance().setUser(user!!)
+                        user!!.setStatusOnline(true)
                         navigation(1)
                     }
                 }

@@ -2,4 +2,5 @@
     <string name="app_name">Chat Now</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="digits">1234567890QWERTYUIOPASDFGHJKLZXCVBNMmnbvcxzlkjhgfdsapoiuytrewq</string>
 </resources>

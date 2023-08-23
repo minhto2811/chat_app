@@ -4,7 +4,7 @@
     <solid
         android:color="@color/online"/>
     <size
-        android:width="15dp"
-        android:height="15dp"/>
+        android:width="8dp"
+        android:height="8dp" />
 
 </shape>

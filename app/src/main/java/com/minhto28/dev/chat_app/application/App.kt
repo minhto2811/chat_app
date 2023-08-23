@@ -11,6 +11,7 @@ class App : Application() {
         gSon = Gson()
     }
 
+
     companion object {
         private var mSelf: App? = null
         fun self(): App? {

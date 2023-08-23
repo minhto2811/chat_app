@@ -144,7 +144,7 @@ class RegisterFragment : Fragment() {
 
     private fun createUser(downloadUri: Uri, uid: String) {
         val account = Account(uid, username, password)
-        val user = User(uid, downloadUri.toString(), fullname, true)
+        val user = User(uid, downloadUri.toString(), fullname, true,null)
 
         val accountRef = database.child("account").child(username)
         val userRef = database.child("user").child(uid)
@@ -183,7 +183,10 @@ class RegisterFragment : Fragment() {
     private fun onTextChange(editText: EditText, index: Int) {
         editText.addTextChangedListener {
             when (index) {
-                1 -> fullname = it.toString().trim()
+                1 -> {
+                    fullname = it.toString().trim()
+                }
+
                 2 -> {
                     username = it.toString().trim()
                     binding.tilUsername.error =

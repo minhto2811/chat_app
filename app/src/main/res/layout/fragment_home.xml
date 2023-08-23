@@ -4,9 +4,41 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".ui.main.HomeFragment">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:elevation="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingVertical="8dp">
+
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/logo"
+            android:scaleType="centerInside" />
+
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_user"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent"
+            app:queryHint="Search by name or uid"
+            app:searchIcon="@null" />
+    </LinearLayout>
+
+
     <androidx.recyclerview.widget.RecyclerView
+        tools:listitem="@layout/user_item"
         android:id="@+id/rcv_user"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

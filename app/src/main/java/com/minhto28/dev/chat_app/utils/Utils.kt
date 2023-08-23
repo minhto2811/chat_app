@@ -1,8 +1,10 @@
 package com.minhto28.dev.chat_app.utils
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
+import android.icu.text.Transliterator
 import java.util.UUID
 import kotlin.math.abs
 
@@ -27,5 +29,12 @@ fun showMessage(
         callbacks?.invoke()
     })
     dialog.create().show()
+}
+
+
+@SuppressLint("NewApi")
+fun removeDiacritics(input: String): String {
+    val transliterator = Transliterator.getInstance("NFD; [:Nonspacing Mark:] Remove; NFC")
+    return transliterator.transliterate(input)
 }
 
