@@ -12,9 +12,27 @@ import com.minhto28.dev.chat_app.utils.DataManager
 import com.minhto28.dev.chat_app.utils.showMessage
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+
     private lateinit var navController: NavController
     private lateinit var user: User
+
+    companion object {
+        private lateinit var binding: ActivityMainBinding
+        fun setCount(id: Int, num: Int) {
+            val badge = binding.bottomNavigation.getOrCreateBadge(id)
+            badge.isVisible = true
+            badge.number = num
+        }
+
+        fun clearCount(id: Int) {
+            val badgeDrawable = binding.bottomNavigation.getBadge(id)
+            if (badgeDrawable != null) {
+                badgeDrawable.isVisible = false
+                badgeDrawable.clearNumber()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -38,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         user.setStatusOnline(true)
     }
+
     override fun onStop() {
         super.onStop()
         user.setStatusOnline(false)

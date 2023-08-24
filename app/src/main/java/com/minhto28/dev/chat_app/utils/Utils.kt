@@ -1,10 +1,15 @@
 package com.minhto28.dev.chat_app.utils
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
-import android.content.DialogInterface
-import android.icu.text.Transliterator
+import android.view.inputmethod.InputMethodManager
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.math.abs
 
@@ -25,16 +30,36 @@ fun showMessage(
     if (cancel) {
         dialog.setNegativeButton("Cancel", null)
     }
-    dialog.setPositiveButton("Confirm", DialogInterface.OnClickListener { _, _ ->
+    dialog.setPositiveButton("Confirm", { _, _ ->
         callbacks?.invoke()
     })
     dialog.create().show()
 }
 
+fun hiddenSoftKeyboard(activity: Activity) {
+    val imm: InputMethodManager =
+        activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    imm.hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
+}
+
 
 @SuppressLint("NewApi")
-fun removeDiacritics(input: String): String {
-    val transliterator = Transliterator.getInstance("NFD; [:Nonspacing Mark:] Remove; NFC")
-    return transliterator.transliterate(input)
+fun getTimeDisplay(timestamp: Long): String {
+    val currentTime = System.currentTimeMillis()
+    val messageTime = Instant.ofEpochMilli(timestamp)
+    val currentInstant = Instant.ofEpochMilli(currentTime)
+
+    val duration = Duration.between(messageTime, currentInstant)
+    val minutesAgo = duration.toMinutes()
+
+    return when {
+        minutesAgo < 1 -> "Just now"
+        minutesAgo < 60 -> "$minutesAgo min ago"
+        else -> {
+            val localDateTime = LocalDateTime.ofInstant(messageTime, ZoneId.systemDefault())
+            localDateTime.format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"))
+        }
+    }
 }
+
 

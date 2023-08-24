@@ -30,7 +30,7 @@ class InvitationAdapter( private var list: ArrayList<User>,private val myID: Str
                 Glide.with(context).load(this.avatar).into(binding.imvAvatar)
                 binding.tvFullname.text = "${this.fullname} sent you a friend request"
                 binding.btnDeny.setOnClickListener {
-
+                    this.denyFriendInvitations(myID)
                 }
                 binding.btnAccept.setOnClickListener {
                         this.addFriend(myID)

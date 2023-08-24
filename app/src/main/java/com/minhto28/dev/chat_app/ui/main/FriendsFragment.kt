@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView.OnQueryTextListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
@@ -28,12 +29,13 @@ class FriendsFragment : Fragment() {
     private lateinit var databaseReference: DatabaseReference
     private lateinit var listUser: ArrayList<User>
     private lateinit var listFriend: ArrayList<User>
+    private lateinit var data: ArrayList<User>
     private lateinit var listInvitation: ArrayList<User>
     private lateinit var UID: String
     private lateinit var userAdapter: UserAdapter
     private lateinit var invitationAdapter: InvitationAdapter
     private var expand = true
-    private val collapseDuration = 500
+    private var height = 0
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -41,6 +43,7 @@ class FriendsFragment : Fragment() {
         databaseReference = Firebase.database.reference
         listUser = ArrayList()
         listFriend = ArrayList()
+        data = ArrayList()
         listInvitation = ArrayList()
         UID = DataManager.getInstance().getUser()!!.uid!!
         return binding.root
@@ -51,6 +54,35 @@ class FriendsFragment : Fragment() {
         initView()
         expandOrCollapse()
         getDataUser()
+        searchFriend()
+    }
+
+    private fun searchFriend() {
+        binding.searchFriend.setOnQueryTextListener(object : OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                searchFriendByQuery(newText.toString().trim())
+                return true
+
+            }
+
+        })
+    }
+
+    private fun searchFriendByQuery(query: String) {
+        listFriend.clear()
+        if (query.isNotEmpty()) {
+            val result = data.filter { user ->
+                user.uid == query || user.fullname!!.lowercase().contains(query.lowercase())
+            }.toMutableList() as ArrayList<User>
+            listFriend.addAll(result)
+        } else {
+            listFriend.addAll(data)
+        }
+        userAdapter.notifyDataSetChanged()
     }
 
     private fun expandOrCollapse() {
@@ -61,7 +93,6 @@ class FriendsFragment : Fragment() {
 
             } else {
                 binding.imvExpand.setImageResource(R.drawable.collapse_all_24px)
-
             }
         }
     }
@@ -74,6 +105,9 @@ class FriendsFragment : Fragment() {
         val divider = DividerItemDecoration(requireContext(), RecyclerView.VERTICAL)
         binding.rcvInvitation.addItemDecoration(divider)
         binding.rcvFriends.addItemDecoration(divider)
+        binding.rcvInvitation.post {
+            height = binding.rcvInvitation.height
+        }
     }
 
     private fun getDataUser() {
@@ -100,8 +134,9 @@ class FriendsFragment : Fragment() {
                 val user = snapshot.getValue(User::class.java)
                 if (user != null) {
                     for (i in 0 until listFriend.size) {
-                        if (listFriend[i].uid == user!!.uid){
-                            listFriend.set(i,user)
+                        if (listFriend[i].uid == user.uid) {
+                            listFriend[i] = user
+                            data[i] = user
                             userAdapter.notifyItemChanged(i)
                             break
                         }
@@ -144,6 +179,7 @@ class FriendsFragment : Fragment() {
                     for (user in listUser) {
                         if (user.uid == yourID) {
                             listInvitation.add(user)
+                            MainActivity.setCount(R.id.friendsFragment, listInvitation.size)
                             invitationAdapter.notifyItemInserted(listInvitation.size - 1)
                             break
                         }
@@ -168,8 +204,10 @@ class FriendsFragment : Fragment() {
                         if (listInvitation[i].uid == yourID) {
                             listInvitation.removeAt(i)
                             invitationAdapter.notifyItemRemoved(i)
+                            MainActivity.setCount(R.id.friendsFragment, listInvitation.size)
                             if (listInvitation.isEmpty()){
                                 binding.lnInvitation.visibility = View.GONE
+                                MainActivity.clearCount(R.id.friendsFragment)
                             }
                             break
                         }
@@ -198,6 +236,7 @@ class FriendsFragment : Fragment() {
                     for (user in listUser) {
                         if (user.uid == uid) {
                             listFriend.add(user)
+                            data.add(user)
                             userAdapter.notifyItemInserted(listFriend.size - 1)
                             break
                         }
@@ -216,6 +255,7 @@ class FriendsFragment : Fragment() {
                     for (i in 0 until listFriend.size) {
                         if (listFriend[i].uid == uid) {
                             listFriend.removeAt(i)
+                            data.removeAt(i)
                             userAdapter.notifyItemRemoved(i)
                             break
                         }
@@ -233,12 +273,4 @@ class FriendsFragment : Fragment() {
 
         })
     }
-
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-
 }

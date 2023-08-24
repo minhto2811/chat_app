@@ -8,5 +8,6 @@
     <color name="orange">#ff9e69</color>
     <color name="online">#42ffdf</color>
     <color name="blue">#3ccaf4</color>
+    <color name="background_message">#57FFFFFF</color>
 
 </resources>

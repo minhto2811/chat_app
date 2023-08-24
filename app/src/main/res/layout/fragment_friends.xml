@@ -24,7 +24,7 @@
             android:scaleType="centerInside" />
 
         <androidx.appcompat.widget.SearchView
-            android:id="@+id/search_user"
+            android:id="@+id/search_friend"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:imeOptions="actionSearch"

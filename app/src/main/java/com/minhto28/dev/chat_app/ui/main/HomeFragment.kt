@@ -2,6 +2,7 @@ package com.minhto28.dev.chat_app.ui.main
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,16 +28,17 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var databaseReference: DatabaseReference
     private lateinit var list: ArrayList<User>
+    private lateinit var data: ArrayList<User>
     private lateinit var userAdapter: UserAdapter
     private lateinit var UID: String
-    private var isFilter = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         databaseReference = Firebase.database.reference
         list = ArrayList()
+        data = ArrayList()
         UID = DataManager.getInstance().getUser()!!.uid!!
         return binding.root
     }
@@ -63,19 +65,7 @@ class HomeFragment : Fragment() {
         })
     }
 
-    private fun searchByQuery(query: String) {
-        if (query.isNotEmpty()) {
-            var filter = ArrayList<User>()
-            for (user in list) {
-                if (user.uid!! == query || user.fullname!!.contains(query)) {
-                    filter.add(user)
-                }
-            }
 
-        } else {
-
-        }
-    }
 
     private fun inintView() {
         userAdapter = UserAdapter(list, UID)
@@ -85,26 +75,18 @@ class HomeFragment : Fragment() {
     }
 
     private fun getFriends() {
-        var max = 9999999L
-        var count = 0
         val friendRef = databaseReference.child("user").child(UID).child("friends")
         friendRef.addChildEventListener(object : ChildEventListener {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                 val uid = snapshot.getValue(String::class.java)
-                if (max > snapshot.childrenCount) {
-                    max = snapshot.childrenCount
-                }
-
                 if (uid != null) {
-                    count++
                     for (i in 0 until list.size) {
                         if (list[i].uid == uid) {
                             list.removeAt(i)
+                            data.removeAt(i)
+                            userAdapter.notifyDataSetChanged()
                             break
                         }
-                    }
-                    if (count.toLong() == max || max == 0L) {
-                        userAdapter.notifyDataSetChanged()
                     }
                 }
             }
@@ -142,6 +124,7 @@ class HomeFragment : Fragment() {
                 if (userMore != null) {
                     if (userMore.uid != UID) {
                         list.add(userMore)
+                        data.add(userMore)
                         userAdapter.notifyItemInserted(list.size - 1)
                         if (max == count.toLong()) {
                             getFriends()
@@ -153,9 +136,13 @@ class HomeFragment : Fragment() {
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
                 val user = snapshot.getValue(User::class.java)
                 if (user != null) {
+                    if (user.uid == UID) {
+                        return
+                    }
                     for (i in 0 until list.size) {
                         if (user.uid == list[i].uid) {
                             list[i] = user
+                            data[i] = user
                             userAdapter.notifyItemChanged(i)
                             break
                         }
@@ -169,6 +156,7 @@ class HomeFragment : Fragment() {
                     for (i in 0 until list.size) {
                         if (user.uid == list[i].uid) {
                             list.removeAt(i)
+                            data.removeAt(i)
                             userAdapter.notifyItemRemoved(i)
                             break
                         }
@@ -187,9 +175,18 @@ class HomeFragment : Fragment() {
         })
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+
+    private fun searchByQuery(query: String) {
+        list.clear()
+        if (query.isNotEmpty()) {
+            val result = data.filter { user ->
+                user.uid == query || user.fullname!!.lowercase().contains(query.lowercase())
+            }.toMutableList() as ArrayList<User>
+            list.addAll(result)
+        } else {
+            list.addAll(data)
+        }
+        userAdapter.notifyDataSetChanged()
     }
 
 }

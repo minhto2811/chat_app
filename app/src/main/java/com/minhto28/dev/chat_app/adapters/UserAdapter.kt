@@ -1,6 +1,7 @@
 package com.minhto28.dev.chat_app.adapters
 
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import com.bumptech.glide.Glide
 import com.minhto28.dev.chat_app.R
 import com.minhto28.dev.chat_app.databinding.UserItemBinding
 import com.minhto28.dev.chat_app.models.User
+import com.minhto28.dev.chat_app.ui.chat.ChatActivity
 
 class UserAdapter(
     private var list: ArrayList<User>,
@@ -47,6 +49,14 @@ class UserAdapter(
                             Toast.makeText(context, "Invitation failed", Toast.LENGTH_SHORT).show()
                             binding.imvAddFriend.setImageResource(R.drawable.baseline_person_add_alt_1_24)
                         }
+                    }
+                }
+                if (isFriend) {
+                    binding.lnChat.setOnClickListener {
+                        val intent = Intent(context, ChatActivity::class.java)
+                        intent.putExtra("id", this.uid)
+                        intent.putExtra("UID", myID)
+                        context.startActivity(intent)
                     }
                 }
             }

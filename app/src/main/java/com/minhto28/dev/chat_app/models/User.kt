@@ -29,10 +29,14 @@ data class User(
         }
     }
 
-    fun addFriend(id: String) {
-        //xác nhận lời mời
+    fun denyFriendInvitations(id: String) {
         val confirm = Firebase.database.reference.child("invitation").child(id).child(uid!!)
         confirm.removeValue()
+    }
+
+    fun addFriend(id: String) {
+        //xác nhận lời mời
+        denyFriendInvitations(id)
         //Thêm bạn bè
         val yourAdd =
             Firebase.database.reference.child("user").child(uid!!).child("friends").child(id)
