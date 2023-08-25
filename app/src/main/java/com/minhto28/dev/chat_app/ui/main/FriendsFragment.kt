@@ -179,7 +179,6 @@ class FriendsFragment : Fragment() {
                     for (user in listUser) {
                         if (user.uid == yourID) {
                             listInvitation.add(user)
-                            MainActivity.setCount(R.id.friendsFragment, listInvitation.size)
                             invitationAdapter.notifyItemInserted(listInvitation.size - 1)
                             break
                         }
@@ -204,10 +203,8 @@ class FriendsFragment : Fragment() {
                         if (listInvitation[i].uid == yourID) {
                             listInvitation.removeAt(i)
                             invitationAdapter.notifyItemRemoved(i)
-                            MainActivity.setCount(R.id.friendsFragment, listInvitation.size)
                             if (listInvitation.isEmpty()){
                                 binding.lnInvitation.visibility = View.GONE
-                                MainActivity.clearCount(R.id.friendsFragment)
                             }
                             break
                         }

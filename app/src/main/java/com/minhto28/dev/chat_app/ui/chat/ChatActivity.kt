@@ -1,9 +1,20 @@
 package com.minhto28.dev.chat_app.ui.chat
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.view.ContextMenu
+import android.view.MenuItem
 import android.view.View
+import android.widget.PopupMenu
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import com.bumptech.glide.Glide
 import com.google.firebase.database.ChildEventListener
@@ -13,17 +24,22 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.minhto28.dev.chat_app.R
 import com.minhto28.dev.chat_app.adapters.MessageAdapter
 import com.minhto28.dev.chat_app.databinding.ActivityChatBinding
 import com.minhto28.dev.chat_app.models.Message
 import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.utils.hiddenSoftKeyboard
+import com.minhto28.dev.chat_app.utils.showMessage
 
 class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
     private lateinit var databaseReference: DatabaseReference
     private lateinit var listMessage: ArrayList<Message>
     private lateinit var messageAdapter: MessageAdapter
+    private val PERMISSION_REQUEST_CODE = 555
+    private lateinit var imagePickerLauncher: ActivityResultLauncher<String>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
@@ -33,15 +49,108 @@ class ChatActivity : AppCompatActivity() {
         val id = intent.getStringExtra("id")
         val UID = intent.getStringExtra("UID")
         if (id != null && UID != null) {
-            setInfoFriend(id)
+            setInfoFriend(UID, id)
             showChat(UID, id)
             sendMessage(UID, id)
             initView(UID)
+            createPopupMenu(UID, id)
+            allowSend()
+            gallery()
+        } else {
+            showMessage("Error! An error occurred. Please try again later", this, false) {
+                finish()
+            }
         }
-        allowSend()
+
     }
 
+    private fun gallery() {
+        binding.imvGallery.setOnClickListener {
+            checkPermission()
+        }
+    }
+
+    private fun checkPermission() {
+
+    }
+
+    private fun oppenGallery() {
+        val mimeTypes = arrayOf("image/*", "video/*") // Chọn cả ảnh và video
+        imagePickerLauncher.launch(mimeTypes.toString())
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                oppenGallery()
+            } else {
+                showMessage("Access denied", this, false, null)
+            }
+        }
+    }
+
+    private fun createPopupMenu(UID: String, id: String) {
+        binding.imvMoreVert.setOnClickListener {
+            val popupMenu = PopupMenu(this, it) // "this" là Context, "button" là View
+            popupMenu.inflate(R.menu.menu_action_user) // Gắn menu resource vào PopupMenu
+
+            // Xử lý sự kiện khi một mục được chọn
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.action_delete_chat -> {
+                        clearChat(UID, id) { finish() }
+                        true
+                    }
+
+                    R.id.action_delete_friend -> {
+                        clearChat(UID, id) {
+                            clearChat(id, UID) {
+                                deleteFriend(UID, id) {
+                                    deleteFriend(id, UID) {
+                                        finish()
+                                    }
+                                }
+                            }
+                        }
+
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+
+            popupMenu.show() // Hiển thị PopupMenu
+        }
+    }
+
+    private fun deleteFriend(id_sender: String, id_reciver: String, callback: (() -> Unit)?) {
+        databaseReference.child("user").child(id_sender).child("friends").child(id_reciver)
+            .removeValue().addOnSuccessListener {
+                callback?.invoke()
+            }
+    }
+
+    private fun clearChat(id_sender: String, id_reciver: String, callback: (() -> Unit)?) {
+        databaseReference.child("chat").child(id_sender).child(id_reciver).removeValue()
+            .addOnSuccessListener {
+                callback?.invoke()
+            }
+    }
+
+
     private fun initView(UID: String) {
+        imagePickerLauncher =
+            registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+                if (uri != null) {
+                    // Thực hiện xử lý với uri
+                }
+            }
         messageAdapter = MessageAdapter(listMessage, UID)
         binding.rcvChat.adapter = messageAdapter
     }
@@ -131,7 +240,7 @@ class ChatActivity : AppCompatActivity() {
         })
     }
 
-    private fun setInfoFriend(id: String) {
+    private fun setInfoFriend(UID: String, id: String) {
         val friendRef = databaseReference.child("user").child(id)
         friendRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -140,15 +249,40 @@ class ChatActivity : AppCompatActivity() {
                     Glide.with(applicationContext).load(friend.avatar).into(binding.imvAvatar)
                     binding.tvFullname.text = friend.fullname
                     binding.imvOnline.visibility = if (friend.status) View.VISIBLE else View.GONE
+                    if (friend.friends?.get(UID) == null) {
+                        finish()
+                    }
+
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                binding.tvFullname.text = "Người dùng ChatNow"
-                binding.imvOnline.visibility = View.GONE
+                showMessage(
+                    "Error! An error occurred. Please try again later",
+                    this@ChatActivity,
+                    false
+                ) {
+                    finish()
+                }
             }
 
         })
+    }
+
+
+    override fun onCreateContextMenu(
+        menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?
+    ) {
+        super.onCreateContextMenu(menu, v, menuInfo)
+        menuInflater.inflate(R.menu.menu_action_user, menu)
+    }
+
+    override fun onContextItemSelected(item: MenuItem): Boolean {
+        return super.onContextItemSelected(item)
+        when (item.itemId) {
+            R.id.action_delete_chat -> Toast.makeText(this, "1", Toast.LENGTH_SHORT).show()
+            R.id.action_delete_friend -> Toast.makeText(this, "2", Toast.LENGTH_SHORT).show()
+        }
     }
 
 

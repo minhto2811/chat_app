@@ -1,5 +1,6 @@
 package com.minhto28.dev.chat_app.ui.main
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
@@ -8,6 +9,7 @@ import androidx.navigation.ui.NavigationUI.setupWithNavController
 import com.minhto28.dev.chat_app.R
 import com.minhto28.dev.chat_app.databinding.ActivityMainBinding
 import com.minhto28.dev.chat_app.models.User
+import com.minhto28.dev.chat_app.service.MyService
 import com.minhto28.dev.chat_app.utils.DataManager
 import com.minhto28.dev.chat_app.utils.showMessage
 
@@ -38,6 +40,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         user = DataManager.getInstance().getUser()!!
+        val intent = Intent(this, MyService::class.java)
+        intent.putExtra("user", user)
+        startService(intent)
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHostFragment.navController
@@ -47,20 +52,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onBackPressed() {
         showMessage("Exit app", this, true) {
-            user.setStatusOnline(false)
             finish()
         }
     }
-
-    override fun onResume() {
-        super.onResume()
-        user.setStatusOnline(true)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        user.setStatusOnline(false)
-    }
-
 
 }

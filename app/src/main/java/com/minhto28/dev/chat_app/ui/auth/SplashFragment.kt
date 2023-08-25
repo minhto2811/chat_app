@@ -77,7 +77,6 @@ class SplashFragment : Fragment() {
                     if (user != null) {
                         DataManager.getInstance().setAccount(account!!)
                         DataManager.getInstance().setUser(user!!)
-                        user!!.setStatusOnline(true)
                         navigation(1)
                     }
                 }

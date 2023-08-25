@@ -69,7 +69,6 @@ class LoginFragment : Fragment() {
                                     override fun onDataChange(snapshot: DataSnapshot) {
                                         user = snapshot.getValue(User::class.java)
                                         if (user != null) {
-                                            user!!.setStatusOnline(true)
                                             SharedPrefs.instance.put(account)
                                             DataManager.getInstance().setAccount(account!!)
                                             DataManager.getInstance().setUser(user!!)

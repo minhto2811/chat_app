@@ -52,7 +52,9 @@
             android:textColor="@color/black"
             android:textSize="16dp" />
 
-        <ImageView
+        <ImageButton
+            android:id="@+id/imv_more_vert"
+            android:background="@android:color/transparent"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:padding="4dp"

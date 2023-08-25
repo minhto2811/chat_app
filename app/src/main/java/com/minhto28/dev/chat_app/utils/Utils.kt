@@ -4,7 +4,10 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.view.inputmethod.InputMethodManager
+import java.io.Serializable
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
@@ -30,9 +33,9 @@ fun showMessage(
     if (cancel) {
         dialog.setNegativeButton("Cancel", null)
     }
-    dialog.setPositiveButton("Confirm", { _, _ ->
+    dialog.setPositiveButton("Confirm") { _, _ ->
         callbacks?.invoke()
-    })
+    }
     dialog.create().show()
 }
 
@@ -62,4 +65,10 @@ fun getTimeDisplay(timestamp: Long): String {
     }
 }
 
+fun <T : Serializable?> Intent.getSerializable(key: String, m_class: Class<T>): T {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+        this.getSerializableExtra(key, m_class)!!
+    else
+        this.getSerializableExtra(key) as T
+}
 

@@ -2,7 +2,6 @@ package com.minhto28.dev.chat_app.ui.main
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -136,15 +135,21 @@ class HomeFragment : Fragment() {
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
                 val user = snapshot.getValue(User::class.java)
                 if (user != null) {
-                    if (user.uid == UID) {
-                        return
-                    }
-                    for (i in 0 until list.size) {
-                        if (user.uid == list[i].uid) {
-                            list[i] = user
-                            data[i] = user
-                            userAdapter.notifyItemChanged(i)
-                            break
+                    if (user.uid != UID) {
+                        var isDel = user.friends?.get(UID) != null
+                        if (!isDel) {
+                            list.add(user)
+                            data.add(user)
+                            userAdapter.notifyItemInserted(list.size - 1)
+                            return
+                        }
+                        for (i in 0 until list.size) {
+                            if (user.uid == list[i].uid) {
+                                list[i] = user
+                                data[i] = user
+                                userAdapter.notifyItemChanged(i)
+                                break
+                            }
                         }
                     }
                 }
