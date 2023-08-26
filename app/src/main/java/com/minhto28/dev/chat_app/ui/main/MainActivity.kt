@@ -2,6 +2,7 @@ package com.minhto28.dev.chat_app.ui.main
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
@@ -16,7 +17,7 @@ import com.minhto28.dev.chat_app.utils.showMessage
 class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
-    private lateinit var user: User
+    private lateinit var intent: Intent
 
     companion object {
         private lateinit var binding: ActivityMainBinding
@@ -39,9 +40,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        user = DataManager.getInstance().getUser()!!
-        val intent = Intent(this, MyService::class.java)
-        intent.putExtra("user", user)
+        intent = Intent(this,MyService::class.java)
         startService(intent)
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
@@ -54,6 +53,11 @@ class MainActivity : AppCompatActivity() {
         showMessage("Exit app", this, true) {
             finish()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopService(intent)
     }
 
 }

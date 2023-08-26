@@ -15,11 +15,16 @@ import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.ui.chat.ChatActivity
 
 class UserAdapter(
-    private var list: ArrayList<User>,
     private val myID: String,
    private val isFriend: Boolean = false
 ) :
     RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
+    private var list = ArrayList<User>()
+
+    fun setData(data: ArrayList<User>) {
+        list = data
+        notifyDataSetChanged()
+    }
 
 
     inner class UserViewHolder(val binding: UserItemBinding, val context: Context) :

@@ -1,30 +1,25 @@
-package com.minhto28.dev.chat_app.ui.auth
+package com.minhto28.dev.chat_app.ui.auth.splash
 
 import SharedPrefs
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import com.minhto28.dev.chat_app.R
 import com.minhto28.dev.chat_app.databinding.FragmentSplashBinding
 import com.minhto28.dev.chat_app.models.Account
 import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.ui.main.MainActivity
-import com.minhto28.dev.chat_app.utils.DataManager
 
 class SplashFragment : Fragment() {
     private var _binding: FragmentSplashBinding? = null
+    private val splashViewModel: SplashViewModel by viewModels()
     private val binding get() = _binding!!
     private var timeStart = 0L
     private var timeEnd = 0L
@@ -42,52 +37,24 @@ class SplashFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkAccount()
+        splashViewModel.success.observe(viewLifecycleOwner) {
+            timeEnd = System.currentTimeMillis()
+            when (it) {
+                true -> navigation(1)
+                false -> navigation(0)
+            }
+        }
     }
 
     private fun checkAccount() {
         account = SharedPrefs.instance.get(SharedPrefs.ACCOUNT)
         if (account != null) {
-            val accountRef = Firebase.database.reference.child("account").child(account!!.username)
-            accountRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val account = snapshot.getValue(Account::class.java)
-                    if (account != null) {
-                        getUser(account)
-                    } else {
-                        navigation(0)
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    navigation(0)
-                }
-
-            })
+            splashViewModel.login(account!!)
         } else {
             navigation(0)
         }
     }
 
-    private fun getUser(account: Account) {
-        val usersRef = Firebase.database.reference.child("user").child(this.account!!.uid)
-        usersRef.addListenerForSingleValueEvent(
-            object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    user = snapshot.getValue(User::class.java)
-                    if (user != null) {
-                        DataManager.getInstance().setAccount(account!!)
-                        DataManager.getInstance().setUser(user!!)
-                        navigation(1)
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    navigation(0)
-                }
-
-            }
-        )
-    }
 
     private fun navigation(status: Int) {
         timeEnd = System.currentTimeMillis()

@@ -5,7 +5,7 @@
     android:layout_marginTop="8dp"
     android:gravity="right"
     android:orientation="vertical"
-    android:paddingRight="16dp">
+    android:paddingRight="4dp">
 
     <TextView
         android:id="@+id/tv_mess"

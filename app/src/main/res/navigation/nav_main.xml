@@ -7,17 +7,17 @@
 
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.minhto28.dev.chat_app.ui.main.HomeFragment"
+        android:name="com.minhto28.dev.chat_app.ui.main.home.HomeFragment"
         android:label="fragment_home"
         tools:layout="@layout/fragment_home"></fragment>
     <fragment
         android:id="@+id/friendsFragment"
-        android:name="com.minhto28.dev.chat_app.ui.main.FriendsFragment"
+        android:name="com.minhto28.dev.chat_app.ui.main.friends.FriendsFragment"
         android:label="fragment_friends"
         tools:layout="@layout/fragment_friends"></fragment>
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.minhto28.dev.chat_app.ui.main.SettingsFragment"
+        android:name="com.minhto28.dev.chat_app.ui.main.settings.SettingsFragment"
         android:label="fragment_settings"
         tools:layout="@layout/fragment_settings" />
 </navigation>

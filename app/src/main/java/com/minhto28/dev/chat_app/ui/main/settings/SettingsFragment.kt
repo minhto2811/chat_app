@@ -1,4 +1,4 @@
-package com.minhto28.dev.chat_app.ui.main
+package com.minhto28.dev.chat_app.ui.main.settings
 
 import SharedPrefs
 import android.content.Intent
@@ -38,7 +38,6 @@ class SettingsFragment : Fragment() {
     private fun logout() {
         binding.btnLogout.setOnClickListener {
             showMessage("Confirm current account logout", requireContext(), true) {
-                user!!.setStatusOnline(false)
                 SharedPrefs.instance.clear()
                 requireActivity().startActivity(Intent(requireContext(), AuthActivity::class.java))
                 requireActivity().finish()

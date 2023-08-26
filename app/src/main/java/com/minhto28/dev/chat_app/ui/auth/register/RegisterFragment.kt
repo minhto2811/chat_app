@@ -1,6 +1,5 @@
-package com.minhto28.dev.chat_app.ui.auth
+package com.minhto28.dev.chat_app.ui.auth.register
 
-import SharedPrefs
 import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -12,24 +11,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.FirebaseStorage
 import com.minhto28.dev.chat_app.databinding.FragmentRegisterBinding
-import com.minhto28.dev.chat_app.models.Account
-import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.ui.main.MainActivity
-import com.minhto28.dev.chat_app.utils.DataManager
-import com.minhto28.dev.chat_app.utils.generateUniqueID
 import com.minhto28.dev.chat_app.utils.showMessage
 
 class RegisterFragment : Fragment() {
@@ -41,7 +29,8 @@ class RegisterFragment : Fragment() {
     private var username = ""
     private var password = ""
     private var repeat_password = ""
-    private lateinit var database: DatabaseReference
+    private val registerViewModel: RegisterViewModel by viewModels()
+
 
     private val pickImageActivityResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -68,11 +57,35 @@ class RegisterFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        database = Firebase.database.reference
         selectImage()
         backToLogin()
         checkField()
         register()
+        registerViewModel.success.observe(viewLifecycleOwner) {
+            loading(View.GONE, View.VISIBLE)
+            when (it) {
+                true -> switchScreen()
+                false -> showMessage(
+                    "The account already exists on the system", requireContext(),
+                    false
+                ) {
+                    binding.tilUsername.error = "Account already exists"
+                }
+
+                else -> showMessage(
+                    "Error! An error occurred. Please try again later",
+                    requireContext(),
+                    false,
+                    null
+                )
+            }
+        }
+    }
+
+    private fun switchScreen() {
+        val intent = Intent(requireActivity(), MainActivity::class.java)
+        requireActivity().startActivity(intent)
+        requireActivity().finish()
     }
 
 
@@ -87,90 +100,11 @@ class RegisterFragment : Fragment() {
     private fun register() {
         binding.btnSignup.setOnClickListener {
             loading(View.VISIBLE, View.GONE)
-            database.child("account").child(username)
-                .addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        if (snapshot.value == null) {
-                            saveImage()
-                        } else {
-                            loading(View.GONE, View.VISIBLE)
-                            showMessage(
-                                "This account has already existed!", requireContext(), false, null
-                            )
-                        }
-                    }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        loading(View.GONE, View.VISIBLE)
-                        showMessage(error.message, requireContext(), false, null)
-                        Log.e("check", error.message)
-                    }
-
-                })
-
+            registerViewModel.register(uri!!, fullname, username, password)
         }
     }
 
-    private fun saveImage() {
-        Log.e("saveImage uri", uri.toString())
-        val uid = generateUniqueID()
-        val ref = FirebaseStorage.getInstance().reference.child("avatar/uid_${uid}.jpg")
-        val uploadTask = ref.putFile(uri!!)
 
-        uploadTask.continueWithTask { task ->
-            if (!task.isSuccessful) {
-                task.exception?.let {
-                    Log.e("saveImage exception", it.toString())
-                    throw it
-                }
-            }
-            ref.downloadUrl
-        }.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val downloadUri = task.result
-                createUser(downloadUri, uid)
-            } else {
-                loading(View.GONE, View.VISIBLE)
-                showMessage(
-                    "Error! An error occurred. Please try again later",
-                    requireContext(),
-                    false,
-                    null
-                )
-                Log.e("saveImage", "Lỗi khi lưu ảnh kiểm tra lại quyền đọc ghi storage")
-            }
-        }
-    }
-
-    private fun createUser(downloadUri: Uri, uid: String) {
-        val account = Account(uid, username, password)
-        val user = User(uid, downloadUri.toString(), fullname, true,null)
-
-        val accountRef = database.child("account").child(username)
-        val userRef = database.child("user").child(uid)
-        accountRef.setValue(account).addOnSuccessListener {
-            userRef.setValue(user).addOnSuccessListener {
-                SharedPrefs.instance.put(account)
-                DataManager.getInstance().setAccount(account)
-                DataManager.getInstance().setUser(user)
-                loading(View.GONE, View.VISIBLE)
-                Toast.makeText(requireContext(), "Account successfully created", Toast.LENGTH_SHORT)
-                    .show()
-                val intent = Intent(requireActivity(), MainActivity::class.java)
-                requireActivity().startActivity(intent)
-                requireActivity().finish()
-            }.addOnFailureListener {
-                loading(View.GONE, View.VISIBLE)
-                showMessage(it.message!!, requireContext(), false, null)
-                Log.e("user ref: ", it.toString())
-            }
-        }.addOnFailureListener {
-            loading(View.GONE, View.VISIBLE)
-            showMessage(it.message!!, requireContext(), false, null)
-            Log.e("account ref: ", it.toString())
-        }
-
-    }
 
 
     private fun checkField() {

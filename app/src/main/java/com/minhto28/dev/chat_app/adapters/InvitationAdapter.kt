@@ -8,10 +8,14 @@ import com.bumptech.glide.Glide
 import com.minhto28.dev.chat_app.databinding.InvitationItemBinding
 import com.minhto28.dev.chat_app.models.User
 
-class InvitationAdapter( private var list: ArrayList<User>,private val myID: String ) : RecyclerView.Adapter<InvitationAdapter.InvationViewHolder>() {
+class InvitationAdapter(private val myID: String) :
+    RecyclerView.Adapter<InvitationAdapter.InvationViewHolder>() {
+    private var list = ArrayList<User>()
 
-
-
+    fun setData(data: ArrayList<User>) {
+        list = data
+        notifyDataSetChanged()
+    }
 
     inner class InvationViewHolder(val binding: InvitationItemBinding, val context: Context) :
         RecyclerView.ViewHolder(binding.root)

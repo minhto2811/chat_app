@@ -6,7 +6,7 @@
     app:startDestination="@id/splashFragment">
     <fragment
         android:id="@+id/splashFragment"
-        android:name="com.minhto28.dev.chat_app.ui.auth.SplashFragment"
+        android:name="com.minhto28.dev.chat_app.ui.auth.splash.SplashFragment"
         android:label="fragment_splash"
         tools:layout="@layout/fragment_splash" >
         <action
@@ -15,7 +15,7 @@
     </fragment>
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.minhto28.dev.chat_app.ui.auth.LoginFragment"
+        android:name="com.minhto28.dev.chat_app.ui.auth.login.LoginFragment"
         android:label="fragment_login"
         tools:layout="@layout/fragment_login">
         <action
@@ -24,7 +24,7 @@
     </fragment>
     <fragment
         android:id="@+id/registerFragment"
-        android:name="com.minhto28.dev.chat_app.ui.auth.RegisterFragment"
+        android:name="com.minhto28.dev.chat_app.ui.auth.register.RegisterFragment"
         android:label="fragment_register"
         tools:layout="@layout/fragment_register" />
 
