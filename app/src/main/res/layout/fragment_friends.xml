@@ -31,7 +31,7 @@
             android:inputType="text"
             app:iconifiedByDefault="false"
             app:queryBackground="@android:color/transparent"
-            app:queryHint="Search by name or uid"
+            app:queryHint="Search friend"
             app:searchIcon="@null" />
     </LinearLayout>
 

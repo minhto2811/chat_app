@@ -32,10 +32,16 @@
             android:inputType="text"
             app:iconifiedByDefault="false"
             app:queryBackground="@android:color/transparent"
-            app:queryHint="Search by name or uid"
+            app:queryHint="Search user"
             app:searchIcon="@null" />
     </LinearLayout>
 
+    <ProgressBar
+        android:id="@+id/progress_loading"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="24dp" />
 
     <androidx.recyclerview.widget.RecyclerView
         tools:listitem="@layout/user_item"

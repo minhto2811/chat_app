@@ -11,8 +11,12 @@ import com.minhto28.dev.chat_app.databinding.SenderLayoutBinding
 import com.minhto28.dev.chat_app.models.Message
 import com.minhto28.dev.chat_app.utils.getTimeDisplay
 
-class MessageAdapter(private val list: ArrayList<Message>, private val myID: String) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class MessageAdapter(private val myID: String) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    var list = ArrayList<Message>()
+        set(value) {
+            field = value
+            notifyDataSetChanged()
+        }
 
     override fun getItemViewType(position: Int): Int {
         val message = list[position]
@@ -41,19 +45,32 @@ class MessageAdapter(private val list: ArrayList<Message>, private val myID: Str
         val index_time: Long = System.currentTimeMillis()
         when (holder) {
             is SenderViewholder -> {
+                holder.binding.tvMess.visibility =
+                    if (message.message.isNullOrEmpty()) View.GONE else View.VISIBLE
                 holder.binding.tvMess.text = message.message
-                if (index_time - message.time!! > 300000) {
-                    holder.binding.tvTime.visibility = View.VISIBLE
-                    holder.binding.tvTime.text = getTimeDisplay(message.time)
+                if (!message.image.isNullOrEmpty()) {
+                    holder.binding.rcvImage.visibility = View.VISIBLE
+                    holder.binding.rcvImage.adapter = MessegeImageAdapter(message.image!!)
                 }
+
+                holder.binding.tvTime.visibility =
+                    if (index_time - message.time!! > 300000) View.VISIBLE else View.GONE
+                holder.binding.tvTime.text = getTimeDisplay(message.time)
+
             }
 
             is ReciverViewHolder -> {
+                holder.binding.tvMess.visibility =
+                    if (message.message.isNullOrEmpty()) View.GONE else View.VISIBLE
                 holder.binding.tvMess.text = message.message
-                if (index_time - message.time!! > 300000) {
-                    holder.binding.tvTime.visibility = View.VISIBLE
-                    holder.binding.tvTime.text = getTimeDisplay(message.time)
+                if (!message.image.isNullOrEmpty()) {
+                    holder.binding.rcvImage.visibility = View.VISIBLE
+                    holder.binding.rcvImage.adapter = MessegeImageAdapter(message.image!!)
                 }
+
+                holder.binding.tvTime.visibility =
+                    if (index_time - message.time!! > 300000) View.VISIBLE else View.GONE
+                holder.binding.tvTime.text = getTimeDisplay(message.time)
             }
         }
     }

@@ -18,7 +18,7 @@ import com.minhto28.dev.chat_app.utils.DataManager
 class FriendsFragment : Fragment() {
     private var _binding: FragmentFriendsBinding? = null
     private val binding get() = _binding!!
-    private lateinit var UID: String
+    private var UID: String? = DataManager.getInstance().getUser()?.uid
     private lateinit var userAdapter: UserAdapter
     private var expand = true
     private var height = 0
@@ -28,7 +28,6 @@ class FriendsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentFriendsBinding.inflate(inflater, container, false)
-        UID = DataManager.getInstance().getUser()!!.uid!!
         return binding.root
     }
 
@@ -38,10 +37,13 @@ class FriendsFragment : Fragment() {
         expandOrCollapse()
         searchFriend()
         friendViewModel.dataLiveData.observe(viewLifecycleOwner) {
-            userAdapter.setData(it!!)
+            userAdapter.setData(ArrayList(it.values))
+        }
+        friendViewModel.dataLiveDataFilter.observe(viewLifecycleOwner) {
+            userAdapter.setData(ArrayList(it.values))
         }
         friendViewModel.dataLiveDataInvitation.observe(viewLifecycleOwner) {
-            invitationAdapter.setData(it!!)
+            invitationAdapter.setData(ArrayList(it.values))
             binding.tvCountInvitaion.text = "You have received ${it.size} friend requests"
             binding.lnInvitation.visibility = if (it.isEmpty()) View.GONE else View.VISIBLE
         }
@@ -54,7 +56,8 @@ class FriendsFragment : Fragment() {
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                searchFriendByQuery(newText.toString().trim())
+                val query = newText.toString().trim()
+                friendViewModel.filter(query)
                 return true
 
             }
@@ -80,9 +83,9 @@ class FriendsFragment : Fragment() {
     }
 
     private fun initView() {
-        invitationAdapter = InvitationAdapter(UID)
+        invitationAdapter = InvitationAdapter(UID!!)
         binding.rcvInvitation.adapter = invitationAdapter
-        userAdapter = UserAdapter(UID, true)
+        userAdapter = UserAdapter(UID!!, true)
         binding.rcvFriends.adapter = userAdapter
         val divider = DividerItemDecoration(requireContext(), RecyclerView.VERTICAL)
         binding.rcvInvitation.addItemDecoration(divider)

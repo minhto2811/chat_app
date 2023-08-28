@@ -4,22 +4,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.widget.SearchView.OnQueryTextListener
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import com.minhto28.dev.chat_app.adapters.UserAdapter
 import com.minhto28.dev.chat_app.databinding.FragmentHomeBinding
+import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.utils.DataManager
 
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    private lateinit var databaseReference: DatabaseReference
     private lateinit var userAdapter: UserAdapter
     private lateinit var UID: String
     private lateinit var homeViewModel: HomeViewModel
@@ -29,7 +27,6 @@ class HomeFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        databaseReference = Firebase.database.reference
         UID = DataManager.getInstance().getUser()!!.uid!!
         return binding.root
     }
@@ -48,7 +45,8 @@ class HomeFragment : Fragment() {
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                searchByQuery(newText!!.trim())
+                val query = newText.toString().trim()
+                homeViewModel.filter(query)
                 return false
             }
 
@@ -63,15 +61,14 @@ class HomeFragment : Fragment() {
         val divider = DividerItemDecoration(requireContext(), RecyclerView.VERTICAL)
         binding.rcvUser.addItemDecoration(divider)
         homeViewModel.dataLiveData.observe(viewLifecycleOwner) {
-            userAdapter.setData(it!!)
+            binding.progressLoading.visibility = View.GONE
+            userAdapter.setData(ArrayList(it.values))
+        }
+        homeViewModel.dataLiveDataFilter.observe(viewLifecycleOwner) {
+            userAdapter.setData(ArrayList(it.values))
         }
     }
 
-
-
-    private fun searchByQuery(query: String) {
-        userAdapter.notifyDataSetChanged()
-    }
 
 }
 

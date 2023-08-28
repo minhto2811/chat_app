@@ -2,16 +2,13 @@ package com.minhto28.dev.chat_app.ui.main
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI.setupWithNavController
 import com.minhto28.dev.chat_app.R
 import com.minhto28.dev.chat_app.databinding.ActivityMainBinding
-import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.service.MyService
-import com.minhto28.dev.chat_app.utils.DataManager
 import com.minhto28.dev.chat_app.utils.showMessage
 
 class MainActivity : AppCompatActivity() {

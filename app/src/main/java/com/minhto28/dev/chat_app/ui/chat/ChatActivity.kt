@@ -1,55 +1,76 @@
 package com.minhto28.dev.chat_app.ui.chat
 
-import android.content.pm.PackageManager
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.view.ContextMenu
-import android.view.MenuItem
 import android.view.View
+import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
-import com.google.firebase.database.ChildEventListener
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import com.minhto28.dev.chat_app.R
+import com.minhto28.dev.chat_app.adapters.ImageAdapter
 import com.minhto28.dev.chat_app.adapters.MessageAdapter
 import com.minhto28.dev.chat_app.databinding.ActivityChatBinding
 import com.minhto28.dev.chat_app.models.Message
-import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.utils.hiddenSoftKeyboard
 import com.minhto28.dev.chat_app.utils.showMessage
 
+
 class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
-    private lateinit var databaseReference: DatabaseReference
-    private lateinit var listMessage: ArrayList<Message>
+
     private lateinit var messageAdapter: MessageAdapter
-    private val PERMISSION_REQUEST_CODE = 555
-    private lateinit var imagePickerLauncher: ActivityResultLauncher<String>
+    private lateinit var chatViewModel: ChatViewModel
+    private lateinit var imageAdapter: ImageAdapter
+
+    private val pickImageActivityResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val uri = ArrayList<Uri>()
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data: Intent? = result.data
+                if (data?.clipData != null) {
+                    val count = data.clipData!!.itemCount
+                    for (i in 0 until count) {
+                        uri.add(data.clipData!!.getItemAt(i).uri)
+                    }
+                } else if (data?.data != null) {
+                    uri.add(data.data!!)
+                }
+                uri.isNotEmpty().let { notEmpty ->
+                    if (notEmpty) {
+                        imageAdapter.list = uri
+                    }
+                }
+                binding.imvSend.enable()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        databaseReference = Firebase.database.reference
-        listMessage = ArrayList()
+        chatViewModel = ViewModelProvider(this).get(ChatViewModel::class.java)
         val id = intent.getStringExtra("id")
-        val UID = intent.getStringExtra("UID")
-        if (id != null && UID != null) {
-            setInfoFriend(UID, id)
-            showChat(UID, id)
-            sendMessage(UID, id)
-            initView(UID)
-            createPopupMenu(UID, id)
+        val myID = intent.getStringExtra("UID")
+        if (id != null && myID != null) {
+            setInfoFriend(id)
+            chatViewModel.showChat(myID, id)
+            chatViewModel.chat.observe(this) {
+                messageAdapter.list = it
+                if (messageAdapter.list.isNotEmpty()) {
+                    binding.rcvChat.smoothScrollToPosition(messageAdapter.list.size - 1)
+                }
+            }
+            sendMessage(myID, id)
+            initView(myID)
+            createPopupMenu(myID, id)
             allowSend()
             gallery()
         } else {
@@ -60,54 +81,39 @@ class ChatActivity : AppCompatActivity() {
 
     }
 
+
     private fun gallery() {
         binding.imvGallery.setOnClickListener {
-            checkPermission()
+            selectImage()
         }
     }
 
-    private fun checkPermission() {
 
+    private fun selectImage() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+        intent.type = "image/*"
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+        pickImageActivityResult.launch(intent)
     }
 
-    private fun oppenGallery() {
-        val mimeTypes = arrayOf("image/*", "video/*") // Chọn cả ảnh và video
-        imagePickerLauncher.launch(mimeTypes.toString())
-    }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                oppenGallery()
-            } else {
-                showMessage("Access denied", this, false, null)
-            }
-        }
-    }
-
-    private fun createPopupMenu(UID: String, id: String) {
+    private fun createPopupMenu(myID: String, id: String) {
         binding.imvMoreVert.setOnClickListener {
             val popupMenu = PopupMenu(this, it) // "this" là Context, "button" là View
             popupMenu.inflate(R.menu.menu_action_user) // Gắn menu resource vào PopupMenu
-
             // Xử lý sự kiện khi một mục được chọn
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.action_delete_chat -> {
-                        clearChat(UID, id) { finish() }
+                        chatViewModel.clearChat(myID, id) { finish() }
                         true
                     }
 
                     R.id.action_delete_friend -> {
-                        clearChat(UID, id) {
-                            clearChat(id, UID) {
-                                deleteFriend(UID, id) {
-                                    deleteFriend(id, UID) {
+                        chatViewModel.clearChat(myID, id) {
+                            chatViewModel.clearChat(id, myID) {
+                                chatViewModel.deleteFriend(myID, id) {
+                                    chatViewModel.deleteFriend(id, myID) {
                                         finish()
                                     }
                                 }
@@ -125,161 +131,64 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    private fun deleteFriend(id_sender: String, id_reciver: String, callback: (() -> Unit)?) {
-        databaseReference.child("user").child(id_sender).child("friends").child(id_reciver)
-            .removeValue().addOnSuccessListener {
-                callback?.invoke()
-            }
+
+    private fun initView(myID: String) {
+        messageAdapter = MessageAdapter(myID)
+        binding.rcvChat.adapter = messageAdapter
+        imageAdapter = ImageAdapter()
+        binding.rcvImage.adapter = imageAdapter
     }
 
-    private fun clearChat(id_sender: String, id_reciver: String, callback: (() -> Unit)?) {
-        databaseReference.child("chat").child(id_sender).child(id_reciver).removeValue()
-            .addOnSuccessListener {
-                callback?.invoke()
-            }
-    }
-
-
-    private fun initView(UID: String) {
-        imagePickerLauncher =
-            registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-                if (uri != null) {
-                    // Thực hiện xử lý với uri
+    @SuppressLint("NotifyDataSetChanged")
+    private fun sendMessage(myID: String, id: String) {
+        binding.imvSend.setOnClickListener {
+            binding.lnSending.visibility = View.VISIBLE
+            val mess = binding.edtText.text.toString().trim()
+            val message = Message(System.currentTimeMillis(), mess, null, myID, null, false)
+            chatViewModel.save(myID, id, message, imageAdapter.list) {
+                binding.lnSending.visibility = View.GONE
+                imageAdapter.list.clear()
+                imageAdapter.notifyDataSetChanged()
+                binding.rcvImage.visibility = View.VISIBLE
+                if (!it) {
+                    Toast.makeText(this, "Your message has not been sent", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
-        messageAdapter = MessageAdapter(listMessage, UID)
-        binding.rcvChat.adapter = messageAdapter
-    }
-
-    private fun sendMessage(UID: String, id: String) {
-        binding.imvSend.setOnClickListener {
-            val mess = binding.edtText.text.toString().trim()
+            binding.rcvImage.visibility = View.GONE
             binding.edtText.text = null
             binding.edtText.clearFocus()
             hiddenSoftKeyboard(this)
-            val time = System.currentTimeMillis()
-            val message = Message(time, mess, null, UID, null)
-            save(UID, id, message) {
-                Toast.makeText(this, "Your message has not been sent", Toast.LENGTH_SHORT).show()
-            }
-            save(id, UID, message, null)
+            binding.imvSend.enable()
         }
     }
 
-    private fun save(
-        id_sender: String,
-        id_reciver: String,
-        message: Message,
-        callback: (() -> Unit)?
-    ) {
-        val myChat =
-            databaseReference.child("chat").child(id_sender).child(id_reciver)
-                .child(message.time.toString())
-        myChat.setValue(message).addOnFailureListener {
-            callback?.invoke()
-        }
-    }
 
     private fun allowSend() {
         binding.edtText.addTextChangedListener {
-            binding.imvSend.visibility =
-                if (it.toString().trim().isNotEmpty()) View.VISIBLE else View.GONE
+            binding.imvSend.enable()
         }
     }
 
-    private fun showChat(UID: String, id: String) {
-        val chatRef = databaseReference.child("chat").child(UID).child(id)
-        chatRef.addChildEventListener(object : ChildEventListener {
-            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                val message = snapshot.getValue(Message::class.java)
-                if (message != null) {
-                    listMessage.add(message)
-                    messageAdapter.notifyItemInserted(listMessage.size - 1)
-                }
-            }
-
-            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-                val message = snapshot.getValue(Message::class.java)
-                if (message != null) {
-                    for (i in 0 until listMessage.size) {
-                        if (listMessage[i].time == message.time) {
-                            listMessage[i] = message
-                            messageAdapter.notifyItemChanged(i)
-                            break
-                        }
-                    }
-
-                }
-            }
-
-            override fun onChildRemoved(snapshot: DataSnapshot) {
-                val message = snapshot.getValue(Message::class.java)
-                if (message != null) {
-                    for (i in 0 until listMessage.size) {
-                        if (listMessage[i].time == message.time) {
-                            listMessage.removeAt(i)
-                            messageAdapter.notifyItemRemoved(i)
-                            break
-                        }
-                    }
-                }
-            }
-
-            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-
-            }
-
-        })
+    private fun ImageView.enable() {
+        binding.imvSend.visibility = if (!binding.edtText.text.toString().trim()
+                .isNullOrEmpty() || !imageAdapter.list.isNullOrEmpty()
+        ) View.VISIBLE else View.GONE
     }
 
-    private fun setInfoFriend(UID: String, id: String) {
-        val friendRef = databaseReference.child("user").child(id)
-        friendRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val friend = snapshot.getValue(User::class.java)
-                if (friend != null) {
-                    Glide.with(applicationContext).load(friend.avatar).into(binding.imvAvatar)
-                    binding.tvFullname.text = friend.fullname
-                    binding.imvOnline.visibility = if (friend.status) View.VISIBLE else View.GONE
-                    if (friend.friends?.get(UID) == null) {
-                        finish()
-                    }
 
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                showMessage(
-                    "Error! An error occurred. Please try again later",
-                    this@ChatActivity,
-                    false
-                ) {
+    private fun setInfoFriend(id: String) {
+        chatViewModel.setFriend(id, this)
+        chatViewModel.friend.observe(this) {
+            if (it != null) {
+                Glide.with(applicationContext).load(it.avatar).into(binding.imvAvatar)
+                binding.tvFullname.text = it.fullname
+                binding.imvOnline.visibility = if (it.status) View.VISIBLE else View.GONE
+            } else {
+                showMessage("The chat is no longer available", this, false) {
                     finish()
                 }
             }
-
-        })
-    }
-
-
-    override fun onCreateContextMenu(
-        menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?
-    ) {
-        super.onCreateContextMenu(menu, v, menuInfo)
-        menuInflater.inflate(R.menu.menu_action_user, menu)
-    }
-
-    override fun onContextItemSelected(item: MenuItem): Boolean {
-        return super.onContextItemSelected(item)
-        when (item.itemId) {
-            R.id.action_delete_chat -> Toast.makeText(this, "1", Toast.LENGTH_SHORT).show()
-            R.id.action_delete_friend -> Toast.makeText(this, "2", Toast.LENGTH_SHORT).show()
         }
     }
-
-
 }
