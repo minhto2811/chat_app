@@ -34,32 +34,31 @@
             android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_username"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:boxStrokeWidth="1dp">
 
-            <EditText
-                android:digits="@string/digits"
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edt_username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:drawableStart="@drawable/baseline_account_circle_24"
                 android:drawablePadding="8dp"
                 android:hint="Username"
-                android:imeOptions="actionNext"
                 android:inputType="text"
                 android:maxLength="20" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             app:boxStrokeWidth="1dp"
             app:passwordToggleEnabled="true">
 
-            <EditText
-                android:digits="@string/digits"
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edt_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -68,7 +67,6 @@
                 android:drawableEnd="@drawable/baseline_remove_red_eye_24"
                 android:drawablePadding="8dp"
                 android:hint="Password"
-                android:imeOptions="actionDone"
                 android:inputType="textPassword"
                 android:maxLength="20" />
         </com.google.android.material.textfield.TextInputLayout>

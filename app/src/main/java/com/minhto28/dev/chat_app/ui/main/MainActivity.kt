@@ -18,10 +18,17 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private lateinit var binding: ActivityMainBinding
-        fun setCount(id: Int, num: Int) {
-            val badge = binding.bottomNavigation.getOrCreateBadge(id)
-            badge.isVisible = true
-            badge.number = num
+        var countNow = 0
+
+        fun addCount(id: Int, num: Int, invitation: Int) {
+            countNow += num
+            if (countNow > 0) {
+                val badge = binding.bottomNavigation.getOrCreateBadge(id)
+                badge.isVisible = true
+                badge.number = countNow + invitation
+            } else {
+                clearCount(id)
+            }
         }
 
         fun clearCount(id: Int) {

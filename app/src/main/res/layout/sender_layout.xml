@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_marginTop="8dp"
     android:gravity="right"
     android:orientation="vertical"
@@ -14,16 +15,18 @@
         android:layout_height="wrap_content"
         android:layout_gravity="right"
         android:background="@drawable/sender_shape"
-        android:visibility="gone"
         android:textColor="@color/black" />
 
     <androidx.recyclerview.widget.RecyclerView
+        android:fitsSystemWindows="true"
+        android:nestedScrollingEnabled="false"
+        android:overScrollMode="never"
+        tools:listitem="@layout/message_image_layout"
         android:id="@+id/rcv_image"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_margin="4dp"
         android:layoutDirection="rtl"
-        android:visibility="gone"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:spanCount="2" />
 
@@ -34,6 +37,5 @@
         android:layout_height="wrap_content"
         android:layout_gravity="right"
         android:textSize="10dp"
-        android:textColor="@color/hint"
-        android:visibility="gone" />
+        android:textColor="@color/hint" />
 </LinearLayout>

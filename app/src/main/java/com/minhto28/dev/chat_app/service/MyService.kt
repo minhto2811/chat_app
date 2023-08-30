@@ -11,26 +11,28 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.minhto28.dev.chat_app.R
+import com.minhto28.dev.chat_app.models.Friend
 import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.ui.main.MainActivity
+import com.minhto28.dev.chat_app.ui.main.USER
 import com.minhto28.dev.chat_app.ui.main.dataFriend
 import com.minhto28.dev.chat_app.ui.main.dataHome
 import com.minhto28.dev.chat_app.ui.main.dataInvitation
-import com.minhto28.dev.chat_app.utils.DataManager
+
 
 class MyService : Service() {
 
     override fun onBind(intent: Intent): IBinder? = null
-    private var user: User? = DataManager.getInstance().getUser()
+    private var user: User = USER.value!!
     private var databaseReference: DatabaseReference = Firebase.database.reference
     private var listHome = HashMap<String, User>()
-    private var listFriend = HashMap<String, User>()
+    private var listFriend = HashMap<String, Friend>()
     private var listInvitation = HashMap<String, User>()
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        user?.setStatusOnline(true)
-        fetchData(user?.uid!!)
+        user.setStatusOnline(true)
+        fetchData(user.uid)
         return START_NOT_STICKY
     }
 
@@ -41,13 +43,11 @@ class MyService : Service() {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                 try {
                     val userMore = snapshot.getValue(User::class.java)
-                    if (userMore != null) {
-                        if (userMore.uid != uid) {
-                            listHome[userMore.uid!!] = userMore
-                            dataHome.postValue(listHome)
-                            getFriends(uid)
-                            getInvitation(uid)
-                        }
+                    if (userMore != null && userMore.uid != uid) {
+                        listHome[userMore.uid] = userMore
+                        dataHome.postValue(listHome)
+                        getFriends(uid)
+                        getInvitation(uid)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -57,13 +57,15 @@ class MyService : Service() {
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
                 val user = snapshot.getValue(User::class.java)
                 if (user != null) {
-                    val boolean = listHome[user.uid] != null
-                    val boolean1 = listFriend[user.uid] != null
-                    if (boolean1) {
-                        listFriend[user.uid!!] = user
+                    if (user.uid == uid) {
+                        USER.postValue(user)
+                        return
+                    }
+                    if (listFriend[user.uid] != null) {
+                        listFriend[user.uid]!!.user = user
                         dataFriend.postValue(listFriend)
-                    } else if (boolean) {
-                        listHome[user.uid!!] = user
+                    } else if (listHome[user.uid] != null) {
+                        listHome[user.uid] = user
                         dataHome.postValue(listHome)
                     }
                 }
@@ -73,10 +75,12 @@ class MyService : Service() {
             override fun onChildRemoved(snapshot: DataSnapshot) {
                 val user = snapshot.getValue(User::class.java)
                 if (user != null) {
-                    val boolean1 = listHome[user.uid] != null
-                    if (boolean1) {
+                    if (listHome[user.uid] != null) {
                         listHome.remove(user.uid)
                         dataHome.postValue(listHome)
+                    } else if (listFriend[user.uid] != null) {
+                        listFriend.remove(user.uid)
+                        dataFriend.postValue(listFriend)
                     }
                 }
             }
@@ -100,7 +104,7 @@ class MyService : Service() {
                     if (id != null) {
                         listInvitation[id] = listHome[id]!!
                         dataInvitation.postValue(listInvitation)
-                        MainActivity.setCount(R.id.friendsFragment, listInvitation.size)
+                        MainActivity.addCount(R.id.friendsFragment, 0, listInvitation.size)
                     }
                 }
 
@@ -113,11 +117,7 @@ class MyService : Service() {
                     if (id != null) {
                         listInvitation.remove(id)
                         dataInvitation.postValue(listInvitation)
-                        if (listInvitation.isEmpty()) {
-                            MainActivity.clearCount(R.id.friendsFragment)
-                        } else {
-                            MainActivity.setCount(R.id.friendsFragment, listInvitation.size)
-                        }
+                        MainActivity.addCount(R.id.friendsFragment, 0, listInvitation.size)
                     }
                 }
 
@@ -133,26 +133,48 @@ class MyService : Service() {
     }
 
     private fun getFriends(uid: String) {
-        val friendRef = databaseReference.child("user").child(uid).child("friends")
+        val friendRef = databaseReference.child("friend").child(uid)
         friendRef.addChildEventListener(object : ChildEventListener {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                val id = snapshot.getValue(String::class.java)
-                if (id != null && listHome[id] != null) {
-                    listFriend[id] = listHome[id]!!
+                val friend = snapshot.getValue(Friend::class.java)
+                if (friend != null && listHome[friend.idFriend] != null) {
+                    friend.user = listHome[friend.idFriend]
+                    listFriend[friend.idFriend] = friend
                     dataFriend.postValue(listFriend)
-                    listHome.remove(id)
+                    listHome.remove(friend.idFriend)
                     dataHome.postValue(listHome)
+                    MainActivity.addCount(
+                        R.id.friendsFragment,
+                        friend.count,
+                        listInvitation.size
+                    )
                 }
             }
 
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                val friend = snapshot.getValue(Friend::class.java)
+                if (friend != null && listFriend[friend.idFriend] != null) {
+                    MainActivity.addCount(
+                        R.id.friendsFragment,
+                        friend.count - listFriend[friend.idFriend]!!.count,
+                        listInvitation.size
+                    )
+                    friend.user = listFriend[friend.idFriend]!!.user
+                    listFriend[friend.idFriend] = friend
+                    dataFriend.postValue(listFriend)
+                }
             }
 
             override fun onChildRemoved(snapshot: DataSnapshot) {
-                val id = snapshot.getValue(String::class.java)
-                if (id != null && listFriend[id] != null) {
-                    listHome[id] = listFriend[id]!!
-                    listFriend.remove(id)
+                val friend = snapshot.getValue(Friend::class.java)
+                if (friend != null && listFriend[friend.idFriend] != null) {
+                    MainActivity.addCount(
+                        R.id.friendsFragment,
+                      0-  friend.count,
+                        listInvitation.size
+                    )
+                    listHome[friend.idFriend] = listFriend[friend.idFriend]!!.user!!
+                    listFriend.remove(friend.idFriend)
                     dataFriend.postValue(listFriend)
                     dataHome.postValue(listHome)
                 }
@@ -170,13 +192,10 @@ class MyService : Service() {
     }
 
 
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        user?.setStatusOnline(false)
-    }
 
     override fun onDestroy() {
         super.onDestroy()
-        user?.setStatusOnline(false)
+        user.setStatusOnline(false)
     }
 
 }

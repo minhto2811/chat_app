@@ -9,7 +9,7 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.minhto28.dev.chat_app.models.Account
 import com.minhto28.dev.chat_app.models.User
-import com.minhto28.dev.chat_app.utils.DataManager
+import com.minhto28.dev.chat_app.ui.main.DATA
 
 class SplashViewModel : ViewModel() {
     val success: MutableLiveData<Boolean> = MutableLiveData()
@@ -40,8 +40,7 @@ class SplashViewModel : ViewModel() {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val user = snapshot.getValue(User::class.java)
                     if (user != null) {
-                        DataManager.getInstance().setAccount(account)
-                        DataManager.getInstance().setUser(user)
+                        DATA(user, account)
                         success.value = true
                     } else {
                         success.value = false

@@ -7,7 +7,8 @@
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:id="@+id/ln_chat"
-    android:padding="14dp">
+    android:padding="14dp"
+    android:background="@color/white">
 
 
     <androidx.cardview.widget.CardView

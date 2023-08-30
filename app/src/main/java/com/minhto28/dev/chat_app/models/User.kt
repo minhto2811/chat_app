@@ -1,27 +1,28 @@
 package com.minhto28.dev.chat_app.models
 
+import android.net.Uri
+import android.util.Log
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 import java.io.Serializable
 
-data class User(
-    val uid: String?,
-    val avatar: String?,
-    val fullname: String?,
-    val status: Boolean,
-    val friends: HashMap<String, String>?
+data class User constructor(
+    val uid: String = "",
+    val avatar: String = "",
+    val fullname: String = "",
+    val status: Boolean = true,
 ) : Serializable {
-    constructor() : this(null, null, null, true, null) {
-        // Không cần phải làm gì trong constructor này
-    }
-
+    private val myRef = Firebase.database.reference
+    private val storageRef = FirebaseStorage.getInstance().reference
     fun setStatusOnline(isOnline: Boolean) {
-        val status = Firebase.database.reference.child("user").child(uid!!).child("status")
+        val status = myRef.child("user").child(uid).child("status")
         status.setValue(isOnline)
     }
 
     fun sendFriendInvitations(id: String, callback: ((Boolean) -> Unit)) {
-        val send = Firebase.database.reference.child("invitation").child(uid!!).child(id)
+        val send = myRef.child("invitation").child(uid).child(id)
         send.setValue(id).addOnSuccessListener {
             callback.invoke(true)
         }.addOnFailureListener {
@@ -30,7 +31,7 @@ data class User(
     }
 
     fun denyFriendInvitations(id: String) {
-        val confirm = Firebase.database.reference.child("invitation").child(id).child(uid!!)
+        val confirm = myRef.child("invitation").child(id).child(uid)
         confirm.removeValue()
     }
 
@@ -38,20 +39,87 @@ data class User(
         //xác nhận lời mời
         denyFriendInvitations(id)
         //Thêm bạn bè
-        val yourAdd =
-            Firebase.database.reference.child("user").child(uid!!).child("friends").child(id)
-        yourAdd.setValue(id)
-        val myAdd =
-            Firebase.database.reference.child("user").child(id).child("friends").child(uid!!)
-        myAdd.setValue(uid!!)
+        myRef.child("friend").child(uid).child(id).setValue(Friend(idFriend = id))
+        myRef.child("friend").child(id).child(uid).setValue(Friend(idFriend = uid))
     }
 
-    fun delFriend(id: String) {
-        val myDel =
-            Firebase.database.reference.child("user").child(uid!!).child("friends").child(id)
-        myDel.removeValue()
-        val yourDel =
-            Firebase.database.reference.child("user").child(id).child("friends").child(uid!!)
-        yourDel.removeValue()
+
+    fun changeAvatat(uri: Uri, callback: (Boolean) -> Unit) {
+        val ref = storageRef.child("avatar/uid_${uid}.jpg")
+        val uploadTask = ref.putFile(uri)
+        uploadTask.continueWithTask { task ->
+            if (!task.isSuccessful) {
+                task.exception?.let {
+                    Log.e("saveImage exception", it.toString())
+                    throw it
+                }
+            }
+            ref.downloadUrl
+        }.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val downloadUri = task.result.toString()
+                val ava = myRef.child("user/$uid/avatar")
+                ava.setValue(downloadUri).addOnFailureListener {
+                    callback.invoke(false)
+                }.addOnSuccessListener {
+                    callback.invoke(true)
+                }
+            } else {
+                callback.invoke(false)
+            }
+        }
     }
+
+    fun update(newFullname: String, callback: (Boolean) -> Unit) {
+        myRef.child("user/$uid/fullname").setValue(newFullname).addOnSuccessListener {
+            callback.invoke(true)
+        }.addOnFailureListener {
+            callback.invoke(false)
+        }
+    }
+
+    fun deleteFriend(idReciver: String, callback: () -> Unit) {
+        myRef.child("friend").child(uid).child(idReciver).removeValue()
+        myRef.child("friend").child(idReciver).child(uid).removeValue()
+        deleteAllFilesInFolder("chat/${uid + idReciver}")
+        deleteAllFilesInFolder("chat/${idReciver + uid}")
+        clearChat(idReciver, false) {
+            callback.invoke()
+        }
+    }
+
+    fun clearChat(idReciver: String, only: Boolean, callback: () -> Unit) {
+        myRef.child("chat").child(uid).child(idReciver).removeValue()
+        if (!only) {
+            myRef.child("chat").child(idReciver).child(uid).removeValue()
+        }
+        callback.invoke()
+    }
+
+    private fun deleteAllFilesInFolder(folderPath: String) {
+        val folderRef = storageRef.child(folderPath)
+        folderRef.listAll().addOnSuccessListener { listResult ->
+            val deletePromises = listResult.items.map { item ->
+                item.delete()
+            }
+            val allDeletes = Tasks.whenAll(deletePromises)
+            allDeletes.addOnSuccessListener {
+                Log.e("deleteAllFilesInFolder $folderPath", "success")
+            }.addOnFailureListener { exception ->
+                Log.e("deleteAllFilesInFolder $folderPath", exception.message.toString())
+            }
+        }.addOnFailureListener { exception ->
+            Log.e("deleteAllFilesInFolder $folderPath", exception.message.toString())
+        }
+    }
+
+    fun setSeeding(id: String, seeding: Boolean) {
+        myRef.child("friend").child(uid).child(id).child("seending").setValue(seeding)
+        if (seeding) {
+            myRef.child("friend").child(uid).child(id).child("count").setValue(0)
+        }
+    }
+
+
 }
+

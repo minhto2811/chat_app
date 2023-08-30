@@ -5,7 +5,6 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,8 +15,10 @@ import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.textfield.TextInputLayout
 import com.minhto28.dev.chat_app.databinding.FragmentRegisterBinding
 import com.minhto28.dev.chat_app.ui.main.MainActivity
+import com.minhto28.dev.chat_app.utils.changeActivity
 import com.minhto28.dev.chat_app.utils.showMessage
 
 class RegisterFragment : Fragment() {
@@ -25,10 +26,6 @@ class RegisterFragment : Fragment() {
     private val binding get() = _binding!!
     private var uri: Uri? = null
 
-    private var fullname = ""
-    private var username = ""
-    private var password = ""
-    private var repeat_password = ""
     private val registerViewModel: RegisterViewModel by viewModels()
 
 
@@ -61,32 +58,8 @@ class RegisterFragment : Fragment() {
         backToLogin()
         checkField()
         register()
-        registerViewModel.success.observe(viewLifecycleOwner) {
-            loading(View.GONE, View.VISIBLE)
-            when (it) {
-                true -> switchScreen()
-                false -> showMessage(
-                    "The account already exists on the system", requireContext(),
-                    false
-                ) {
-                    binding.tilUsername.error = "Account already exists"
-                }
-
-                else -> showMessage(
-                    "Error! An error occurred. Please try again later",
-                    requireContext(),
-                    false,
-                    null
-                )
-            }
-        }
     }
 
-    private fun switchScreen() {
-        val intent = Intent(requireActivity(), MainActivity::class.java)
-        requireActivity().startActivity(intent)
-        requireActivity().finish()
-    }
 
 
     private fun selectImage() {
@@ -100,7 +73,29 @@ class RegisterFragment : Fragment() {
     private fun register() {
         binding.btnSignup.setOnClickListener {
             loading(View.VISIBLE, View.GONE)
-            registerViewModel.register(uri!!, fullname, username, password)
+            registerViewModel.register(
+                uri!!,
+                binding.edtFullname.text.toString().trim(),
+                binding.edtUsername.text.toString().trim(),
+                binding.edtPassword.text.toString().trim(),
+            ){
+                loading(View.GONE, View.VISIBLE)
+                when (it) {
+                    true -> changeActivity(requireActivity(), MainActivity::class.java)
+                    false -> showMessage(
+                        "The account already exists on the system", requireContext(), false
+                    ) {
+                        binding.tilUsername.error = "Account already exists"
+                    }
+
+                    else -> showMessage(
+                        "Error! An error occurred. Please try again later",
+                        requireContext(),
+                        false,
+                        null
+                    )
+                }
+            }
         }
     }
 
@@ -108,46 +103,56 @@ class RegisterFragment : Fragment() {
 
 
     private fun checkField() {
-        onTextChange(binding.edtFullname, 1)
-        onTextChange(binding.edtUsername, 2)
-        onTextChange(binding.edtPassword, 3)
-        onTextChange(binding.edtRepeatPassword, 4)
+        binding.edtFullname.onFocusChangeListener = View.OnFocusChangeListener { _  , hasFocus ->
+            if (!hasFocus) {
+                val string =
+                    binding.edtFullname.text.toString().trim().replace("\\s+".toRegex(), " ")
+                binding.edtFullname.setText(string)
+            }
+        }
+        onTextChange(binding.edtFullname, binding.tilFullname, true)
+        onTextChange(binding.edtUsername, binding.tilUsername, false)
+        onTextChange(binding.edtPassword, binding.tilPassword, false)
+        onTextChange(binding.edtRepeatPassword, binding.tilRepeatPassword, false)
     }
 
-    private fun onTextChange(editText: EditText, index: Int) {
+    private fun onTextChange(editText: EditText, textInputLayout: TextInputLayout, space: Boolean) {
         editText.addTextChangedListener {
-            when (index) {
-                1 -> {
-                    fullname = it.toString().trim()
+            val rx = if (space) "[^A-Za-z0-9 ]+" else "[^A-Za-z0-9]+"
+            if (it.toString().contains(rx.toRegex())) {
+                val string =
+                    it.toString().trim().replace(rx.toRegex(), "")
+                editText.setText(string)
+                editText.setSelection(string.length)
+            }
+            if (space) {
+                textInputLayout.error = if (editText.text.toString().trim()
+                        .isEmpty()
+                ) "The input field cannot be left blank" else null
+            } else {
+                textInputLayout.error = if (editText.text.toString()
+                        .trim().length < 5
+                ) "The input field requires at least 5 characters" else null
+                if (editText == binding.edtPassword || editText == binding.edtRepeatPassword && (binding.edtPassword.text.toString()
+                        .trim().length > 4 && binding.edtRepeatPassword.text.toString()
+                        .trim().length > 4)
+                ) {
+                    binding.edtRepeatPassword.error = if (binding.edtPassword.text.toString()
+                            .trim() != binding.edtRepeatPassword.text.toString().trim()
+                    ) "Passwords do not match" else null
                 }
-
-                2 -> {
-                    username = it.toString().trim()
-                    binding.tilUsername.error =
-                        if (username.length < 5) "Username more than 4 characters" else null
-                }
-
-                3 -> {
-                    password = it.toString().trim()
-                    binding.tilPassword.error =
-                        if (password.length < 5) "Password more than 4 characters" else null
-                }
-
-                4 -> {
-                    repeat_password = it.toString().trim()
-                    binding.tilRepeatPassword.error =
-                        if (repeat_password.length < 5) "Password more than 4 characters" else if (repeat_password != password) "Password does not match" else null
-                }
-
-                else -> Log.e("onTextChange: ", "null")
             }
             binding.btnSignup.enable()
         }
     }
 
     private fun Button.enable() {
-        isEnabled =
-            username.length > 4 && fullname.isNotEmpty() && password.length > 4 && repeat_password.length > 4 && uri != null && password == repeat_password
+        isEnabled = binding.edtFullname.text.toString().trim()
+            .isNotEmpty() && binding.edtUsername.text.toString()
+            .trim().length > 4 && binding.edtPassword.text.toString()
+            .trim().length > 4 && uri != null && binding.edtRepeatPassword.text.toString()
+            .trim().length > 4 && binding.edtPassword.text.toString()
+            .trim() == binding.edtRepeatPassword.text.toString().trim()
     }
 
     private fun backToLogin() {

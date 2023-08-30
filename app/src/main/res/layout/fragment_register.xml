@@ -63,12 +63,13 @@
 
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_fullname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             app:boxStrokeWidth="1dp">
 
-            <EditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edt_fullname"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -76,7 +77,6 @@
                 android:drawableStart="@drawable/baseline_cruelty_free_24"
                 android:drawablePadding="8dp"
                 android:hint="Fullname"
-                android:imeOptions="actionNext"
                 android:inputType="textCapWords"
                 android:maxLength="40" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -88,8 +88,7 @@
             android:id="@+id/til_username"
             app:boxStrokeWidth="1dp">
 
-            <EditText
-                android:digits="@string/digits"
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edt_username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -97,7 +96,6 @@
                 android:drawableStart="@drawable/baseline_account_circle_24"
                 android:drawablePadding="8dp"
                 android:hint="Username"
-                android:imeOptions="actionNext"
                 android:inputType="text"
                 android:maxLength="20" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -110,8 +108,7 @@
             android:id="@+id/til_password"
             app:passwordToggleEnabled="true">
 
-            <EditText
-                android:digits="@string/digits"
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edt_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -119,7 +116,6 @@
                 android:drawableStart="@drawable/baseline_key_24"
                 android:drawablePadding="8dp"
                 android:hint="Password"
-                android:imeOptions="actionNext"
                 android:inputType="textPassword"
                 android:maxLength="20" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -132,8 +128,7 @@
             android:id="@+id/til_repeat_password"
             app:passwordToggleEnabled="true">
 
-            <EditText
-                android:digits="@string/digits"
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/edt_repeat_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -141,7 +136,6 @@
                 android:drawableStart="@drawable/baseline_key_24"
                 android:drawablePadding="8dp"
                 android:hint="Password"
-                android:imeOptions="actionDone"
                 android:inputType="textPassword"
                 android:maxLength="20" />
         </com.google.android.material.textfield.TextInputLayout>

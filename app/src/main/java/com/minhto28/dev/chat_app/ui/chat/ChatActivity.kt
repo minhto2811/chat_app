@@ -29,6 +29,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var chatViewModel: ChatViewModel
     private lateinit var imageAdapter: ImageAdapter
+    private var id: String? = null
 
     private val pickImageActivityResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -56,23 +57,28 @@ class ChatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        chatViewModel = ViewModelProvider(this).get(ChatViewModel::class.java)
-        val id = intent.getStringExtra("id")
+        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
+        id = intent.getStringExtra("id")
         val myID = intent.getStringExtra("UID")
         if (id != null && myID != null) {
-            setInfoFriend(id)
-            chatViewModel.showChat(myID, id)
+            initView(myID)
+            setInfoFriend(id!!)
+            chatViewModel.showChat(myID, id!!)
             chatViewModel.chat.observe(this) {
                 messageAdapter.list = it
-                if (messageAdapter.list.isNotEmpty()) {
-                    binding.rcvChat.smoothScrollToPosition(messageAdapter.list.size - 1)
+                if (it.size > 0) {
+                    binding.scrollMessage.fullScroll(View.FOCUS_DOWN)
                 }
             }
-            sendMessage(myID, id)
-            initView(myID)
-            createPopupMenu(myID, id)
+            chatViewModel.setSeeding(id!!, true)
+
+            sendMessage(myID, id!!)
+            createPopupMenu(id!!)
             allowSend()
             gallery()
+            binding.imvBack.setOnClickListener {
+                finish()
+            }
         } else {
             showMessage("Error! An error occurred. Please try again later", this, false) {
                 finish()
@@ -97,7 +103,7 @@ class ChatActivity : AppCompatActivity() {
     }
 
 
-    private fun createPopupMenu(myID: String, id: String) {
+    private fun createPopupMenu(id: String) {
         binding.imvMoreVert.setOnClickListener {
             val popupMenu = PopupMenu(this, it) // "this" là Context, "button" là View
             popupMenu.inflate(R.menu.menu_action_user) // Gắn menu resource vào PopupMenu
@@ -105,19 +111,13 @@ class ChatActivity : AppCompatActivity() {
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.action_delete_chat -> {
-                        chatViewModel.clearChat(myID, id) { finish() }
+                        chatViewModel.clearChat(id, true) { finish() }
                         true
                     }
 
                     R.id.action_delete_friend -> {
-                        chatViewModel.clearChat(myID, id) {
-                            chatViewModel.clearChat(id, myID) {
-                                chatViewModel.deleteFriend(myID, id) {
-                                    chatViewModel.deleteFriend(id, myID) {
-                                        finish()
-                                    }
-                                }
-                            }
+                        chatViewModel.deleteFriend(id) {
+                            finish()
                         }
 
                         true
@@ -144,7 +144,9 @@ class ChatActivity : AppCompatActivity() {
         binding.imvSend.setOnClickListener {
             binding.lnSending.visibility = View.VISIBLE
             val mess = binding.edtText.text.toString().trim()
-            val message = Message(System.currentTimeMillis(), mess, null, myID, null, false)
+            val message = Message(System.currentTimeMillis(), mess, null, myID, null)
+
+
             chatViewModel.save(myID, id, message, imageAdapter.list) {
                 binding.lnSending.visibility = View.GONE
                 imageAdapter.list.clear()
@@ -159,7 +161,7 @@ class ChatActivity : AppCompatActivity() {
             binding.edtText.text = null
             binding.edtText.clearFocus()
             hiddenSoftKeyboard(this)
-            binding.imvSend.enable()
+            binding.imvSend.visibility = View.GONE
         }
     }
 
@@ -171,8 +173,8 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun ImageView.enable() {
-        binding.imvSend.visibility = if (!binding.edtText.text.toString().trim()
-                .isNullOrEmpty() || !imageAdapter.list.isNullOrEmpty()
+        visibility = if (binding.edtText.text.toString().trim()
+                .isNotEmpty() || imageAdapter.list.isNotEmpty()
         ) View.VISIBLE else View.GONE
     }
 
@@ -189,6 +191,20 @@ class ChatActivity : AppCompatActivity() {
                     finish()
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (id != null) {
+            chatViewModel.setSeeding(id!!, true)
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (id != null) {
+            chatViewModel.setSeeding(id!!, false)
         }
     }
 }

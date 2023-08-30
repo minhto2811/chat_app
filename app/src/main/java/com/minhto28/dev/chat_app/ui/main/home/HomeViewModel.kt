@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.ui.main.dataHome
 
-class HomeViewModel() : ViewModel() {
+class HomeViewModel : ViewModel() {
     fun filter(query: String) {
         if (query.isEmpty()) {
             dataLiveData.postValue(dataHome.value)

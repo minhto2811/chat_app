@@ -1,7 +1,6 @@
 package com.minhto28.dev.chat_app.ui.auth.splash
 
-import SharedPrefs
-import android.content.Intent
+import com.minhto28.dev.chat_app.utils.SharedPrefs
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -14,8 +13,8 @@ import androidx.navigation.fragment.findNavController
 import com.minhto28.dev.chat_app.R
 import com.minhto28.dev.chat_app.databinding.FragmentSplashBinding
 import com.minhto28.dev.chat_app.models.Account
-import com.minhto28.dev.chat_app.models.User
 import com.minhto28.dev.chat_app.ui.main.MainActivity
+import com.minhto28.dev.chat_app.utils.changeActivity
 
 class SplashFragment : Fragment() {
     private var _binding: FragmentSplashBinding? = null
@@ -24,7 +23,6 @@ class SplashFragment : Fragment() {
     private var timeStart = 0L
     private var timeEnd = 0L
 
-    private var user: User? = null
     private var account: Account? = null
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -47,7 +45,7 @@ class SplashFragment : Fragment() {
     }
 
     private fun checkAccount() {
-        account = SharedPrefs.instance.get(SharedPrefs.ACCOUNT)
+        account = SharedPrefs.instance[SharedPrefs.ACCOUNT]
         if (account != null) {
             splashViewModel.login(account!!)
         } else {
@@ -74,10 +72,9 @@ class SplashFragment : Fragment() {
         if (status == 0) {
             findNavController().navigate(R.id.action_splashFragment_to_loginFragment)
         } else {
-            val intent = Intent(requireContext(), MainActivity::class.java)
-            requireActivity().startActivity(intent)
-            requireActivity().finish()
+            changeActivity(requireActivity(),MainActivity::class.java)
         }
+
     }
 
 

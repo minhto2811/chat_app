@@ -1,6 +1,6 @@
 package com.minhto28.dev.chat_app.ui.auth.login
 
-import SharedPrefs
+import com.minhto28.dev.chat_app.utils.SharedPrefs
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.database.DataSnapshot
@@ -11,7 +11,8 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.minhto28.dev.chat_app.models.Account
 import com.minhto28.dev.chat_app.models.User
-import com.minhto28.dev.chat_app.utils.DataManager
+import com.minhto28.dev.chat_app.ui.main.DATA
+
 
 class LoginViewModel : ViewModel() {
     val success: MutableLiveData<Boolean?> = MutableLiveData()
@@ -28,8 +29,7 @@ class LoginViewModel : ViewModel() {
                                     val user = snapshot.getValue(User::class.java)
                                     if (user != null) {
                                         SharedPrefs.instance.put(account)
-                                        DataManager.getInstance().setAccount(account)
-                                        DataManager.getInstance().setUser(user)
+                                        DATA(user, account)
                                         success.value = true
                                     }
                                 }
