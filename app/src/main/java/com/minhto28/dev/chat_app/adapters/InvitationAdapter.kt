@@ -34,10 +34,10 @@ class InvitationAdapter(private val myID: String) :
                 Glide.with(context).load(this.avatar).into(binding.imvAvatar)
                 binding.tvFullname.text = "${this.fullname} sent you a friend request"
                 binding.btnDeny.setOnClickListener {
-                    this.denyFriendInvitations(myID)
+                    denyFriendInvitations(myID)
                 }
                 binding.btnAccept.setOnClickListener {
-                        this.addFriend(myID)
+                    addFriend(myID)
                 }
             }
         }

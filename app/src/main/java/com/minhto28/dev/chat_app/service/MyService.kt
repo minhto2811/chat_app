@@ -48,6 +48,7 @@ class MyService : Service() {
                         dataHome.postValue(listHome)
                         getFriends(uid)
                         getInvitation(uid)
+                        getCache(uid)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -94,6 +95,40 @@ class MyService : Service() {
             }
 
         })
+    }
+
+    private fun getCache(uid: String) {
+        databaseReference.child("cache").child(uid)
+            .addChildEventListener(object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                    val id = snapshot.getValue(String::class.java)
+                    if (id != null && listHome[id] != null) {
+                        listHome[id]!!.cache = true
+                        dataHome.postValue(listHome)
+                    }
+                }
+
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+
+                }
+
+                override fun onChildRemoved(snapshot: DataSnapshot) {
+                    val id = snapshot.getValue(String::class.java)
+                    if (id != null && listHome[id] != null) {
+                        listHome[id]!!.cache = false
+                        dataHome.postValue(listHome)
+                    }
+                }
+
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+
+                }
+
+            })
     }
 
     private fun getInvitation(uid: String) {

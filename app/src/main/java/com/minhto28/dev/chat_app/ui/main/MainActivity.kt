@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 
         fun addCount(id: Int, num: Int, invitation: Int) {
             countNow += num
-            if (countNow > 0) {
+            if (countNow + invitation > 0) {
                 val badge = binding.bottomNavigation.getOrCreateBadge(id)
                 badge.isVisible = true
                 badge.number = countNow + invitation

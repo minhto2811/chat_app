@@ -32,12 +32,6 @@ class InformationFragment : Fragment() {
             binding.edtFullname.text = Factory.getInstance().newEditable(it.fullname)
         }
         binding.edtFullname.addTextChangedListener {
-            if (it.toString().contains("[^A-Za-z0-9 ]+".toRegex())) {
-                val string =
-                    it.toString().trim().replace("[^A-Za-z0-9 ]+".toRegex(), "")
-                binding.edtFullname.setText(string)
-                binding.edtFullname.setSelection(string.length)
-            }
             binding.tilFullname.error = if (binding.edtFullname.text.toString().trim()
                     .isEmpty()
             ) "The input field cannot be left blank" else null

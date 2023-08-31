@@ -13,6 +13,7 @@ data class User constructor(
     val avatar: String = "",
     val fullname: String = "",
     val status: Boolean = true,
+    var cache: Boolean = false
 ) : Serializable {
     private val myRef = Firebase.database.reference
     private val storageRef = FirebaseStorage.getInstance().reference
@@ -22,17 +23,27 @@ data class User constructor(
     }
 
     fun sendFriendInvitations(id: String, callback: ((Boolean) -> Unit)) {
-        val send = myRef.child("invitation").child(uid).child(id)
-        send.setValue(id).addOnSuccessListener {
+        myRef.child("invitation").child(uid).child(id).setValue(id).addOnSuccessListener {
             callback.invoke(true)
         }.addOnFailureListener {
             callback.invoke(false)
         }
+        myRef.child("cache").child(id).child(uid).setValue(uid)
     }
 
+    fun delFriendInvitations(id: String, callback: ((Boolean) -> Unit)) {
+        myRef.child("invitation").child(uid).child(id).removeValue().addOnSuccessListener {
+            callback.invoke(true)
+        }.addOnFailureListener {
+            callback.invoke(false)
+        }
+        myRef.child("cache").child(id).child(uid).removeValue()
+    }
+
+
     fun denyFriendInvitations(id: String) {
-        val confirm = myRef.child("invitation").child(id).child(uid)
-        confirm.removeValue()
+        myRef.child("invitation").child(id).child(uid).removeValue()
+        myRef.child("cache").child(uid).child(id).removeValue()
     }
 
     fun addFriend(id: String) {

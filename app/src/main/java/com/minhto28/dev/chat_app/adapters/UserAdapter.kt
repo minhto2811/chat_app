@@ -43,18 +43,34 @@ class UserAdapter(
                 binding.tvFullname.text = this.fullname
                 binding.tvUid.text = "UID: ${this.uid}"
                 binding.imvOnline.visibility = if (this.status) View.VISIBLE else View.GONE
-                binding.imvAddFriend.setOnClickListener {
+                if (cache) {
                     binding.imvAddFriend.setImageResource(R.drawable.baseline_schedule_send_24)
-                    sendFriendInvitations(myID) {
-                        if (!it) {
-                            Toast.makeText(context, "Invitation failed", Toast.LENGTH_SHORT).show()
-                            binding.imvAddFriend.setImageResource(R.drawable.baseline_person_add_alt_1_24)
+                    binding.imvAddFriend.setOnClickListener {
+                        binding.imvAddFriend.setImageResource(R.drawable.baseline_person_add_alt_1_24)
+                        delFriendInvitations(myID) {
+                            if (!it) {
+                                Toast.makeText(
+                                    context, " Delete invitation failed", Toast.LENGTH_SHORT
+                                ).show()
+                                binding.imvAddFriend.setImageResource(R.drawable.baseline_schedule_send_24)
+                            }
+                        }
+                    }
+                } else {
+                    binding.imvAddFriend.setImageResource(R.drawable.baseline_person_add_alt_1_24)
+                    binding.imvAddFriend.setOnClickListener {
+                        binding.imvAddFriend.setImageResource(R.drawable.baseline_schedule_send_24)
+                        sendFriendInvitations(myID) {
+                            if (!it) {
+                                Toast.makeText(context, "Invitation failed", Toast.LENGTH_SHORT)
+                                    .show()
+                                binding.imvAddFriend.setImageResource(R.drawable.baseline_person_add_alt_1_24)
+                            }
                         }
                     }
                 }
             }
         }
     }
-
-
 }
+
