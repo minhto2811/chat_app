@@ -9,12 +9,12 @@
         android:id="@+id/homeFragment"
         android:name="com.minhto28.dev.chat_app.ui.main.home.HomeFragment"
         android:label="fragment_home"
-        tools:layout="@layout/fragment_home"></fragment>
+        tools:layout="@layout/fragment_home"/>
     <fragment
         android:id="@+id/friendsFragment"
         android:name="com.minhto28.dev.chat_app.ui.main.friends.FriendsFragment"
         android:label="fragment_friends"
-        tools:layout="@layout/fragment_friends"></fragment>
+        tools:layout="@layout/fragment_friends"/>
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.minhto28.dev.chat_app.ui.main.settings.SettingsFragment"

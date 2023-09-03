@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@color/white">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
@@ -23,11 +24,13 @@
                 android:id="@+id/imv_avatar"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:scaleType="centerCrop" />
+                android:scaleType="centerCrop"
+                tools:ignore="ImageContrastCheck"
+                android:contentDescription="@string/todo" />
         </androidx.cardview.widget.CardView>
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="14dp"
             android:layout_weight="1"
@@ -50,16 +53,18 @@
                     android:id="@+id/btn_deny"
                     android:layout_width="70dp"
                     android:layout_height="30dp"
-                    android:text="Deny"
-                    android:textSize="10dp" />
+                    android:text="@string/deny"
+                    android:textSize="10sp"
+                    tools:ignore="SmallSp,TextSizeCheck,TouchTargetSizeCheck" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btn_accept"
-                    android:textSize="10dp"
                     android:layout_width="70dp"
                     android:layout_height="30dp"
                     android:layout_marginStart="16dp"
-                    android:text="Accept" />
+                    android:text="@string/accept"
+                    android:textSize="10sp"
+                    tools:ignore="SmallSp,TextSizeCheck,TouchTargetSizeCheck" />
 
             </LinearLayout>
 

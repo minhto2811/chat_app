@@ -47,14 +47,7 @@ class UserAdapter(
                     binding.imvAddFriend.setImageResource(R.drawable.baseline_schedule_send_24)
                     binding.imvAddFriend.setOnClickListener {
                         binding.imvAddFriend.setImageResource(R.drawable.baseline_person_add_alt_1_24)
-                        delFriendInvitations(myID) {
-                            if (!it) {
-                                Toast.makeText(
-                                    context, " Delete invitation failed", Toast.LENGTH_SHORT
-                                ).show()
-                                binding.imvAddFriend.setImageResource(R.drawable.baseline_schedule_send_24)
-                            }
-                        }
+                        denyFriendInvitations(myID)
                     }
                 } else {
                     binding.imvAddFriend.setImageResource(R.drawable.baseline_person_add_alt_1_24)

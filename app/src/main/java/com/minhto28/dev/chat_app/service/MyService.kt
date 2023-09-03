@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import androidx.core.app.NotificationManagerCompat
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -18,6 +19,8 @@ import com.minhto28.dev.chat_app.ui.main.USER
 import com.minhto28.dev.chat_app.ui.main.dataFriend
 import com.minhto28.dev.chat_app.ui.main.dataHome
 import com.minhto28.dev.chat_app.ui.main.dataInvitation
+import com.minhto28.dev.chat_app.utils.createNotification
+import com.minhto28.dev.chat_app.utils.createNotificationChannel
 
 
 class MyService : Service() {
@@ -134,12 +137,18 @@ class MyService : Service() {
     private fun getInvitation(uid: String) {
         databaseReference.child("invitation").child(uid)
             .addChildEventListener(object : ChildEventListener {
+                @SuppressLint("MissingPermission")
                 override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
                     val id = snapshot.getValue(String::class.java)
-                    if (id != null) {
+                    if ((id != null) && (listHome[id] != null)) {
                         listInvitation[id] = listHome[id]!!
                         dataInvitation.postValue(listInvitation)
                         MainActivity.addCount(R.id.friendsFragment, 0, listInvitation.size)
+                        createNotificationChannel(this@MyService,id)
+                        with(NotificationManagerCompat.from(this@MyService)){
+                            val builder = createNotification(this@MyService,id,"Friend request","${listInvitation[id]?.fullname} sent a friend request")
+                            notify(id.toInt(),builder.build())
+                        }
                     }
                 }
 
@@ -153,6 +162,9 @@ class MyService : Service() {
                         listInvitation.remove(id)
                         dataInvitation.postValue(listInvitation)
                         MainActivity.addCount(R.id.friendsFragment, 0, listInvitation.size)
+                        with(NotificationManagerCompat.from(this@MyService)){
+                            cancel(id.toInt())
+                        }
                     }
                 }
 

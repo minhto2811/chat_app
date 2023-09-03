@@ -31,14 +31,6 @@ data class User constructor(
         myRef.child("cache").child(id).child(uid).setValue(uid)
     }
 
-    fun delFriendInvitations(id: String, callback: ((Boolean) -> Unit)) {
-        myRef.child("invitation").child(uid).child(id).removeValue().addOnSuccessListener {
-            callback.invoke(true)
-        }.addOnFailureListener {
-            callback.invoke(false)
-        }
-        myRef.child("cache").child(id).child(uid).removeValue()
-    }
 
 
     fun denyFriendInvitations(id: String) {

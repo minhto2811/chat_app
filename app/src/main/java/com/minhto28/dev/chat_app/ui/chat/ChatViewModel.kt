@@ -1,6 +1,7 @@
 package com.minhto28.dev.chat_app.ui.chat
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.FirebaseException
@@ -117,7 +118,7 @@ class ChatViewModel : ViewModel() {
         notyRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val friend = snapshot.getValue(Friend::class.java)
-                if (friend != null && friend.seending == false) {
+                if (friend != null && !friend.seending) {
                     val count = friend.count + 1
                     notyRef.child("count").setValue(count)
                     val mess = if (message.isNullOrEmpty()) "Hình ảnh" else message
@@ -139,6 +140,7 @@ class ChatViewModel : ViewModel() {
             val uri: List<String> = withContext(Dispatchers.IO) {
                 fileUri.map { image ->
                     async {
+                        Log.e("uri", image.toString())
                         storage.child("chat/$id/${image.lastPathSegment}-${System.currentTimeMillis()}.jpg")
                             .putFile(image).await().storage.downloadUrl.await().toString()
                     }

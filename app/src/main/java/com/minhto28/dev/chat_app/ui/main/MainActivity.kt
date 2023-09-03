@@ -1,8 +1,15 @@
 package com.minhto28.dev.chat_app.ui.main
 
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI.setupWithNavController
@@ -18,7 +25,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private lateinit var binding: ActivityMainBinding
-        var countNow = 0
+        private var countNow = 0
 
         fun addCount(id: Int, num: Int, invitation: Int) {
             countNow += num
@@ -31,7 +38,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        fun clearCount(id: Int) {
+        private fun clearCount(id: Int) {
             val badgeDrawable = binding.bottomNavigation.getBadge(id)
             if (badgeDrawable != null) {
                 badgeDrawable.isVisible = false
@@ -40,6 +47,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val notificationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+                binding.bottomNavigation.selectedItemId = R.id.friendsFragment
+        }
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -50,6 +64,9 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHostFragment.navController
         setupWithNavController(binding.bottomNavigation, navController)
+
+        val filter = IntentFilter("com.example.ACTION_NOTIFICATION_CLICKED")
+        registerReceiver(notificationReceiver, filter)
     }
 
 
@@ -62,6 +79,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         stopService(intent)
+        unregisterReceiver(notificationReceiver)
     }
 
 }

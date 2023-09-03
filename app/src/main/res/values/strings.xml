@@ -7,4 +7,6 @@
     <string name="sending_a_message">Sending a message</string>
     <string name="enter_message">Enter message</string>
     <string name="update">Update</string>
+    <string name="accept">Accept</string>
+    <string name="deny">Deny</string>
 </resources>
